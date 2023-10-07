@@ -1,0 +1,1379 @@
+<!doctype html>
+<html>
+<head>
+  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Magic Hands</title>
+  <style>
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0f0f10; color:#eee; }
+    .wrap { display:grid; grid-template-columns: 1fr; gap:12px; padding:12px; max-width: 1250px; margin: 0 auto; }
+    .card { background:#17171a; border:1px solid #2a2a2e; border-radius:16px; padding:12px; box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+    .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .grid { display:grid; grid-template-columns: 2fr 1fr; gap:12px; }
+    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+    button { background:#222228; color:#eee; border:1px solid #34343b; border-radius:12px; padding:10px 12px; cursor:pointer; }
+    button:hover { background:#2a2a31; }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    .pill { padding:6px 10px; border-radius:999px; background:#222228; border:1px solid #34343b; }
+    .ok { border-color:#2f6; }
+    .warn { border-color:#fc3; }
+    .bad { border-color:#f55; }
+    canvas { width: 100%; height: auto; border-radius: 16px; background:#000; }
+    video { display:none; }
+    #log, #debug { white-space: pre-wrap; font-size: 13px; line-height: 1.25; max-height: 260px; overflow:auto; }
+    .small { font-size: 13px; color:#bdbdc7; }
+    .panel { display:grid; gap:10px; }
+    .sectionTitle { font-weight: 700; margin-top: 4px; }
+    .sliderRow { display:grid; grid-template-columns: 1fr 120px; gap:10px; align-items:center; }
+    input[type="range"] { width: 100%; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .chips { display:flex; gap:6px; flex-wrap:wrap; }
+    .hint { font-size: 12px; color:#cfd0dd; opacity: .9; }
+      /* ===== Header card (capture-like) ===== */
+    .headerCard{ padding: 14px 16px; }
+    .headerBar{
+      display:grid;
+      grid-template-columns: auto 1fr auto;
+      align-items:center;
+      gap:16px;
+    }
+    .headerLeft{ display:flex; align-items:center; gap:14px; min-width: 260px; }
+    .site-logo{ width:88px; height:88px; animation: logoFloat 2.4s ease-in-out infinite; filter: drop-shadow(0 0 14px rgba(34,197,94,.55)); }
+    .brandTitle{
+  font-weight: 1000;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-size: 22px;
+  line-height: 1.05;
+  background: linear-gradient(135deg, #22c55e, #38bdf8, #a855f7, #fb7185, #facc15);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: titleRainbow 5.5s ease infinite, titlePop 1.2s ease-in-out infinite;
+  text-shadow: 0 0 18px rgba(56,189,248,.18);
+}
+    .brandSub{
+      font-size: 13px;
+      letter-spacing: .10em;
+      color:#bdbdc7;
+      margin-top: 2px;
+    }
+    .headerCenter{
+      text-align:center;
+      font-size: 16px;
+      opacity: .35;
+      letter-spacing: .08em;
+      user-select:none;
+    }
+    .headerRight{ display:flex; justify-content:flex-end; min-width: 200px; }
+    .connPill{
+      display:inline-flex; align-items:center; gap:10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(10,10,12,.65);
+      border:1px solid rgba(255,110,110,.65);
+      letter-spacing:.12em;
+      font-size: 13px;
+      text-transform: uppercase;
+      box-shadow: 0 0 0 1px rgba(148,163,184,.18), 0 0 16px rgba(0,0,0,.35);
+    }
+    .connPill .dot{
+      width:10px; height:10px; border-radius: 999px;
+      background:#ff6b6b;
+      box-shadow: 0 0 0 3px rgba(255,107,107,.25), 0 0 12px rgba(255,107,107,.55);
+    }
+    .connPill.connected{ border-color: rgba(34,197,94,.75); }
+    .connPill.connected .dot{
+      background:#22c55e;
+      box-shadow: 0 0 0 3px rgba(34,197,94,.22), 0 0 14px rgba(34,197,94,.6);
+    }
+
+    /* ===== Kid-friendly FUN buttons (no JS changes) ===== */
+    #btnStart, #btnStop, #btnMagic, #btnHelp, #btnMic, #btnTts, #btnMirror, #btnDebug, #btnClear, #btnClearCalib, #btnResetAll{
+      border-radius: 999px;
+      font-weight: 800;
+      letter-spacing: .02em;
+      transition: transform .12s ease, filter .12s ease;
+    }
+    #btnStart{
+      background: linear-gradient(135deg, #22c55e, #4ade80);
+      color:#062b16;
+      border:1px solid rgba(34,197,94,.75);
+      box-shadow: 0 10px 0 rgba(0,0,0,.22);
+    }
+    #btnStop{
+      background: linear-gradient(135deg, #fb7185, #f97316);
+      color:#1b0b0b;
+      border:1px solid rgba(251,113,133,.7);
+      box-shadow: 0 10px 0 rgba(0,0,0,.22);
+    }
+    #btnMagic{
+      background: linear-gradient(135deg, #a855f7, #22c55e);
+      color:#060615;
+      border:1px solid rgba(168,85,247,.65);
+      box-shadow: 0 10px 0 rgba(0,0,0,.22);
+    }
+    #btnHelp{
+      background: linear-gradient(135deg, #60a5fa, #facc15);
+      color:#071018;
+      border:1px solid rgba(96,165,250,.65);
+      box-shadow: 0 10px 0 rgba(0,0,0,.22);
+    }
+    #btnStart:hover, #btnStop:hover, #btnMagic:hover, #btnHelp:hover, #btnMic:hover, #btnTts:hover, #btnMirror:hover, #btnDebug:hover{
+      transform: translateY(-2px) rotate(-1deg);
+      filter: brightness(1.05);
+    }
+    #btnStart:active, #btnStop:active, #btnMagic:active, #btnHelp:active{
+      transform: translateY(2px) scale(.98);
+      box-shadow: 0 6px 0 rgba(0,0,0,.22);
+    }
+    #btnStart::before{ content:"🚀 "; }
+    #btnStop::before{ content:"🛑 "; }
+    #btnMagic::before{ content:"✨ "; }
+    #btnHelp::before{ content:"❓ "; }
+
+
+/* --- Animated logo + title --- */
+@keyframes logoFloat {
+  0%,100% { transform: translateY(0) rotate(-2deg) scale(1); }
+  50%      { transform: translateY(-6px) rotate(2deg)  scale(1.03); }
+}
+@keyframes titleRainbow {
+  0%,100% { background-position: 0% 50%; }
+  50%     { background-position: 100% 50%; }
+}
+@keyframes titlePop {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-1px); }
+}
+
+/* --- Bismillah (top center, discreet) --- */
+.headerCard{ position: relative; overflow: hidden; }
+.bismillah{
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  letter-spacing: .22em;
+  opacity: .22;
+  color: #cbd5e1;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+@media (max-width: 720px){
+  .site-logo{ width:72px; height:72px; }
+  .brandTitle{ font-size: 18px; }
+  .bismillah{ font-size: 10px; top: 6px; letter-spacing: .18em; }
+}
+
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+<!-- Header -->
+    <div class="card headerCard">
+      <div class="bismillah">بسم الله الرحمن الرحيم</div>
+      <div class="headerBar">
+        <div class="headerLeft">
+          <img src="logo.svg" class="site-logo" alt="Logo">
+          <div class="brandBlock">
+            <div class="brandTitle">MAGIC HANDS</div>
+            <div class="brandSub">play • learn • wow ✨</div>
+          </div>
+        </div>
+
+        <div class="headerCenter"></div>
+
+        <div class="headerRight">
+          <span class="connPill" id="connPill"><span class="dot"></span><span id="connText">DISCONNECTED</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content: space-between;">
+        <div class="row">
+          <span class="pill" id="camStatus">📷 Camera: …</span>
+          <span class="pill" id="handStatus">✋ Hands: 0</span>
+          <span class="pill" id="gestureStatus">🧠 Gesture: —</span>
+          <span class="pill" id="confStatus">🎯 Confidence: —</span>
+          <span class="pill" id="speechStatus">🎙️ Speech: off</span>
+        </div>
+        <div class="row">
+          <button id="btnStart">Start</button>
+          <button id="btnStop" disabled>Stop</button>
+          <button id="btnMic">Enable speech</button>
+          <button id="btnTts">Voice: on</button>
+          <button id="btnMirror">Mirror: on</button>
+          <button id="btnMagic">Magic: on ✨</button>
+          <button id="btnHelp">Help</button>
+        </div>
+      </div>
+      <div class="small" style="margin-top:10px;">
+        <b>WOW controls:</b>
+        🤏 <b>Pinch</b> to grab & move the glowing orb • ✌️ <b>Peace</b> spawns sparkles trail • 👍 <b>Thumbs</b> triggers confetti + “LIKE” • ✋ <b>Open</b> makes a light wave • ✊ <b>Fist</b> “shockwave”.
+        <div class="hint">Best accuracy: calibrate each gesture once (right panel). Settings & calibration auto-save.</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <video id="video" playsinline></video>
+        <!-- One canvas used for BOTH camera + effects + landmarks -->
+        <canvas id="canvas" width="960" height="720"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="panel">
+          <div class="row" style="justify-content: space-between;">
+            <b>Controls</b>
+            <button id="btnDebug">Debug: on</button>
+          </div>
+
+          <div class="sectionTitle">👍 Thumbs-up live tuning</div>
+          <div class="small">Sliders reduce false positives. “Use current” sets a threshold from current values with a safety margin.</div>
+
+          <div class="sliderRow">
+            <div>
+              <div class="small">thumbIndexSep ≥ <span id="v_sep">0.58</span></div>
+              <input id="s_sep" type="range" min="0.20" max="1.10" step="0.01" value="0.58" />
+            </div>
+            <button id="use_sep">Use current</button>
+          </div>
+
+          <div class="sliderRow">
+            <div>
+              <div class="small">thumbWristSep ≥ <span id="v_wsep">0.90</span></div>
+              <input id="s_wsep" type="range" min="0.40" max="1.60" step="0.01" value="0.90" />
+            </div>
+            <button id="use_wsep">Use current</button>
+          </div>
+
+          <div class="sliderRow">
+            <div>
+              <div class="small">upDelta (wristY - thumbTipY) ≥ <span id="v_up">0.04</span></div>
+              <input id="s_up" type="range" min="0.00" max="0.20" step="0.005" value="0.04" />
+            </div>
+            <button id="use_up">Use current</button>
+          </div>
+
+          <div class="sliderRow">
+            <div>
+              <div class="small">parallel ≤ <span id="v_par">0.70</span> (lower = stricter)</div>
+              <input id="s_par" type="range" min="0.10" max="1.00" step="0.01" value="0.70" />
+            </div>
+            <button id="use_par">Use current</button>
+          </div>
+
+          <div class="sectionTitle">🎛 Calibration mode</div>
+          <div class="small">Hold steady ~2 seconds. Calibration creates a template for your hand/camera. (Saved automatically.)</div>
+
+          <div class="chips mono" id="calibState">No calibration in progress.</div>
+
+          <div class="chips">
+            <button class="calibBtn" data-gesture="OPEN">Calibrate ✋ OPEN</button>
+            <button class="calibBtn" data-gesture="FIST">Calibrate ✊ FIST</button>
+            <button class="calibBtn" data-gesture="PINCH">Calibrate 🤏 PINCH</button>
+            <button class="calibBtn" data-gesture="THUMBS">Calibrate 👍 THUMBS</button>
+            <button class="calibBtn" data-gesture="PEACE">Calibrate ✌️ PEACE</button>
+            <button class="calibBtn" data-gesture="POINT">Calibrate 👉 POINT</button>
+          </div>
+
+          <div class="row">
+            <button id="btnClearCalib">Clear calibration</button>
+            <button id="btnResetAll">Reset all (saved)</button>
+          </div>
+
+          <div class="sectionTitle">Debug</div>
+          <div id="debug" class="mono"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content: space-between;">
+        <b>Event log</b>
+        <button id="btnClear">Clear</button>
+      </div>
+      <div id="log" class="mono"></div>
+    </div>
+  </div>
+
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+  <script>
+    // =======================
+    // UI helpers
+    // =======================
+    const $ = (id) => document.getElementById(id);
+    const camStatus = $("camStatus");
+    const handStatus = $("handStatus");
+    const gestureStatus = $("gestureStatus");
+    const confStatus = $("confStatus");
+    const speechStatus = $("speechStatus");
+    const logEl = $("log");
+    const debugEl = $("debug");
+    const calibState = $("calibState");
+
+    function log(msg) {
+      const ts = new Date().toLocaleTimeString();
+      logEl.textContent = `[${ts}] ${msg}\n` + logEl.textContent;
+    }
+    function setPill(el, text, cls) {
+      el.classList.remove("ok","warn","bad");
+      if (cls) el.classList.add(cls);
+      el.textContent = text;
+    }
+
+    // =======================
+    // localStorage persistence
+    // =======================
+    const STORAGE_KEY = "magicHands_v1";
+
+    function saveState() {
+      const obj = {
+        thumbsThr,
+        templates: serializeTemplates(),
+        mirror,
+        magicOn
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const obj = JSON.parse(raw);
+        if (obj.thumbsThr) Object.assign(thumbsThr, obj.thumbsThr);
+        if (obj.templates) deserializeTemplates(obj.templates);
+        if (typeof obj.mirror === "boolean") mirror = obj.mirror;
+        if (typeof obj.magicOn === "boolean") magicOn = obj.magicOn;
+      } catch {}
+    }
+
+    function resetAllSaved() {
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    }
+
+    // =======================
+    // Geometry + math
+    // =======================
+    function vsub(a,b){ return {x:a.x-b.x, y:a.y-b.y, z:(a.z||0)-(b.z||0)}; }
+    function vdot(a,b){ return a.x*b.x + a.y*b.y + a.z*b.z; }
+    function vlen(a){ return Math.sqrt(vdot(a,a)); }
+    function dist(a,b){ return vlen(vsub(a,b)); }
+    function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+    function angleDeg(a,b,c){
+      const ba = vsub(a,b);
+      const bc = vsub(c,b);
+      const denom = (vlen(ba)*vlen(bc)) || 1e-9;
+      let cos = vdot(ba,bc)/denom;
+      cos = clamp(cos, -1, 1);
+      return Math.acos(cos) * (180/Math.PI);
+    }
+
+    // =======================
+    // Features
+    // =======================
+    function palmWidth(lm){ return dist(lm[5], lm[17]); } // index MCP to pinky MCP
+
+    function fingerAngles(lm){
+      return {
+        index:  angleDeg(lm[5], lm[6], lm[7]),
+        middle: angleDeg(lm[9], lm[10], lm[11]),
+        ring:   angleDeg(lm[13], lm[14], lm[15]),
+        pinky:  angleDeg(lm[17], lm[18], lm[19]),
+        thumb:  angleDeg(lm[2], lm[3], lm[4])
+      };
+    }
+
+    function extendedFromAnglesAndDistances(lm, angles){
+      const pw = palmWidth(lm) || 1e-6;
+
+      const index  = angles.index  > 160;
+      const middle = angles.middle > 160;
+      const ring   = angles.ring   > 160;
+      const pinky  = angles.pinky  > 160;
+
+      const thumbIndexSep = dist(lm[4], lm[5]) / pw;
+      const thumbWristSep = dist(lm[4], lm[0]) / pw;
+
+      const thumb =
+        (thumbIndexSep > 0.45) ||
+        (thumbWristSep > 0.85) ||
+        (angles.thumb > 135);
+
+      return { thumb, index, middle, ring, pinky };
+    }
+
+    function pinchRatio(lm){
+      const pw = palmWidth(lm) || 1e-6;
+      return dist(lm[4], lm[8]) / pw;
+    }
+
+    function computeThumbParallelAndUpDelta(lm){
+      const wrist = lm[0];
+      const midMcp = lm[9];
+      const axis = vsub(midMcp, wrist);
+      const axisLen = vlen(axis) || 1e-6;
+
+      const thumbTip = lm[4];
+      const tvec = vsub(thumbTip, wrist);
+      const tlen = vlen(tvec) || 1e-6;
+
+      const parallel = Math.abs(vdot(tvec, axis)) / (tlen * axisLen);
+      const upDelta = (wrist.y - thumbTip.y);
+      return { parallel, upDelta };
+    }
+
+    // =======================
+    // Smoothing (EMA + label voting)
+    // =======================
+    const HISTORY = 9;
+    let labelHistory = [];
+    let ema = { pinch: 1, thumb:0, idx:0, mid:0, ring:0, pinky:0,
+                parallel:0.7, upDelta:0.0, tIndexSep:0.0, tWristSep:0.0 };
+
+    function emaUpdate(key, value, alpha=0.35){
+      ema[key] = alpha*value + (1-alpha)*ema[key];
+      return ema[key];
+    }
+    function pushHistory(label){
+      labelHistory.unshift(label);
+      if (labelHistory.length > HISTORY) labelHistory.pop();
+    }
+    function majorityLabel(){
+      const counts = new Map();
+      for (const l of labelHistory) counts.set(l, (counts.get(l)||0)+1);
+      let best = null, bestN = -1;
+      for (const [l,n] of counts.entries()){
+        if (n > bestN) { bestN=n; best=l; }
+      }
+      return best || "—";
+    }
+
+    // =======================
+    // Thumbs-up thresholds (LIVE)
+    // =======================
+    const thumbsThr = { sep: 0.58, wsep: 0.90, up: 0.04, par: 0.70 };
+
+    function syncSliderUI(){
+      $("v_sep").textContent = thumbsThr.sep.toFixed(2);
+      $("v_wsep").textContent = thumbsThr.wsep.toFixed(2);
+      $("v_up").textContent = thumbsThr.up.toFixed(3);
+      $("v_par").textContent = thumbsThr.par.toFixed(2);
+      $("s_sep").value = thumbsThr.sep;
+      $("s_wsep").value = thumbsThr.wsep;
+      $("s_up").value = thumbsThr.up;
+      $("s_par").value = thumbsThr.par;
+      saveState();
+    }
+
+    // =======================
+    // Calibration templates
+    // =======================
+    // Vector dims:
+    // [pinch, parallel, upDelta, tIndexSep, tWristSep, extThumb, extIdx, extMid, extRing, extPinky]
+    const templates = new Map();
+
+    function vecFromFeatures(f){
+      return [
+        f.pinch, f.parallel, f.upDelta, f.tIndexSep, f.tWristSep,
+        f.extThumb, f.extIdx, f.extMid, f.extRing, f.extPinky
+      ];
+    }
+
+    function fitTemplate(gesture, samples){
+      const n = samples.length;
+      const d = samples[0].length;
+      const mean = Array(d).fill(0);
+      for (const s of samples) for (let i=0;i<d;i++) mean[i] += s[i];
+      for (let i=0;i<d;i++) mean[i] /= n;
+
+      const vari = Array(d).fill(0);
+      for (const s of samples) for (let i=0;i<d;i++) {
+        const dx = s[i]-mean[i];
+        vari[i] += dx*dx;
+      }
+      for (let i=0;i<d;i++) vari[i] = Math.max(vari[i]/n, 1e-6);
+
+      templates.set(gesture, { centroid: mean, vari, n });
+      saveState();
+    }
+
+    function templateConfidence(gesture, vec){
+      const t = templates.get(gesture);
+      if (!t) return null;
+      let sum = 0;
+      for (let i=0;i<vec.length;i++){
+        const dx = vec[i] - t.centroid[i];
+        sum += (dx*dx) / t.vari[i];
+      }
+      const conf = Math.exp(-0.35 * sum);
+      return clamp(conf, 0, 1);
+    }
+
+    function serializeTemplates(){
+      const out = {};
+      for (const [k,v] of templates.entries()) out[k] = v;
+      return out;
+    }
+    function deserializeTemplates(obj){
+      templates.clear();
+      for (const k of Object.keys(obj)) templates.set(k, obj[k]);
+    }
+
+    // =======================
+    // Gesture scoring + confidence
+    // =======================
+    function score01(x){ return clamp(x, 0, 1); }
+
+    function gestureScores(features){
+      const t = features;
+      const count = t.extThumb + t.extIdx + t.extMid + t.extRing + t.extPinky;
+
+      const pinchScore = score01((0.55 - t.pinch) / 0.25);
+      const openScore  = score01((count - 3.5) / 1.5) * score01((t.pinch - 0.45) / 0.25);
+      const fistScore  = score01((0.8 - count) / 0.8) * score01((t.pinch - 0.45) / 0.25);
+
+      const peacePattern = (t.extIdx>0.8 && t.extMid>0.8 && t.extRing<0.2 && t.extPinky<0.2);
+      const peaceScore = (peacePattern ? 1 : 0) * score01((t.pinch - 0.45) / 0.25);
+
+      const pointPattern = (t.extIdx>0.8 && t.extMid<0.2 && t.extRing<0.2 && t.extPinky<0.2);
+      const pointScore = (pointPattern ? 1 : 0) * score01((t.pinch - 0.45) / 0.25);
+
+      // THUMBS (tuned)
+      const baseThumbs = (t.extThumb>0.8 && t.extIdx<0.2 && t.extMid<0.2 && t.extRing<0.2 && t.extPinky<0.2) ? 1 : 0;
+      const sepScore   = score01((t.tIndexSep - thumbsThr.sep) / 0.18);
+      const wsepScore  = score01((t.tWristSep - thumbsThr.wsep) / 0.25);
+      const upScore    = score01((t.upDelta - thumbsThr.up) / 0.06);
+      const parScore   = score01((thumbsThr.par - t.parallel) / 0.25);
+      const thumbsScore = baseThumbs * sepScore * wsepScore * upScore * parScore;
+
+      const rule = { PINCH: pinchScore, OPEN: openScore, FIST: fistScore, PEACE: peaceScore, POINT: pointScore, THUMBS: thumbsScore };
+
+      const vec = vecFromFeatures(t);
+      const tmpl = {};
+      for (const g of Object.keys(rule)) tmpl[g] = templateConfidence(g, vec);
+
+      const combined = {};
+      for (const g of Object.keys(rule)){
+        if (tmpl[g] == null) combined[g] = rule[g];
+        else combined[g] = 0.6*rule[g] + 0.4*tmpl[g];
+      }
+
+      let bestG = "—", bestS = 0;
+      for (const [g,s] of Object.entries(combined)){
+        if (s > bestS){ bestS = s; bestG = g; }
+      }
+      return { rule, tmpl, combined, bestG, bestS };
+    }
+
+    function prettyGesture(g){
+      return ({
+        OPEN: "OPEN HAND ✋",
+        FIST: "FIST ✊",
+        PINCH: "PINCH 🤏",
+        THUMBS: "THUMBS UP 👍",
+        PEACE: "PEACE ✌️",
+        POINT: "POINT 👉"
+      })[g] || "—";
+    }
+
+    // =======================
+    // WOW / MAGIC visuals (canvas particles)
+    // =======================
+    let magicOn = true;
+    const particles = [];
+    const bursts = [];
+    const likes = [];
+
+    const orb = {
+      x: 0.5, y: 0.55, r: 0.06, vx: 0, vy: 0,
+      grabbed: false
+    };
+
+    function rand(a,b){ return a + Math.random()*(b-a); }
+
+    function addParticles(kind, x, y, count, power=1){
+      for (let i=0;i<count;i++){
+        particles.push({
+          kind,
+          x, y,
+          vx: rand(-0.01,0.01)*power,
+          vy: rand(-0.012,0.004)*power,
+          life: rand(0.6, 1.2),
+          age: 0,
+          size: rand(2,5)*power
+        });
+      }
+    }
+
+    function addBurst(x,y, strength=1){
+      bursts.push({ x,y, age:0, life: 0.45, strength });
+    }
+
+    function addLike(x,y){
+      likes.push({ x,y, age:0, life: 1.0, rise: rand(0.03,0.06) });
+    }
+
+    // tiny "spark" sound without assets (WebAudio)
+    let audioCtx = null;
+    function beep(freq=880, dur=0.06, type="sine", gain=0.05){
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = type;
+        o.frequency.value = freq;
+        g.gain.value = gain;
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start();
+        setTimeout(() => { o.stop(); }, dur*1000);
+      } catch {}
+    }
+    function sparkleSound(){
+      beep(880, 0.05, "triangle", 0.04);
+      setTimeout(()=>beep(1320, 0.05, "triangle", 0.03), 60);
+      setTimeout(()=>beep(1760, 0.05, "triangle", 0.02), 120);
+    }
+    function confettiSound(){
+      beep(523, 0.06, "square", 0.03);
+      setTimeout(()=>beep(659, 0.06, "square", 0.03), 70);
+      setTimeout(()=>beep(784, 0.06, "square", 0.03), 140);
+    }
+
+    // =======================
+    // State (mirror/debug/speech)
+    // =======================
+    let mirror = true;
+    let debugOn = true;
+
+    // Speech
+    let ttsEnabled = true;
+    function speak(text) {
+      if (!ttsEnabled) return;
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 1.0; u.pitch = 1.0;
+        window.speechSynthesis.speak(u);
+      } catch {}
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let rec = null;
+    let speechEnabled = false;
+
+    function setupSpeech() {
+      if (!SpeechRecognition) {
+        setPill(speechStatus, "🎙️ Speech: unsupported", "bad");
+        log("SpeechRecognition not supported (try Chrome/Edge).");
+        return false;
+      }
+      rec = new SpeechRecognition();
+      rec.lang = "en-US";
+      rec.continuous = true;
+      rec.interimResults = false;
+
+      rec.onstart = () => setPill(speechStatus, "🎙️ Speech: on", "ok");
+      rec.onend = () => {
+        if (speechEnabled) { try { rec.start(); } catch {} }
+        else setPill(speechStatus, "🎙️ Speech: off", "warn");
+      };
+      rec.onerror = (e) => {
+        log(`Speech error: ${e.error}`);
+        setPill(speechStatus, `🎙️ Speech: error (${e.error})`, "bad");
+      };
+      rec.onresult = (ev) => {
+        const last = ev.results[ev.results.length - 1];
+        const text = (last[0].transcript || "").trim().toLowerCase();
+        if (!text) return;
+        log(`Heard: "${text}"`);
+        handleVoiceCommand(text);
+      };
+      return true;
+    }
+
+    function toggleMirror(){
+      mirror = !mirror;
+      $("btnMirror").textContent = mirror ? "Mirror: on" : "Mirror: off";
+      log(`Mirror ${mirror ? "on" : "off"}.`);
+      saveState();
+      speak(mirror ? "Mirror on." : "Mirror off.");
+    }
+    function toggleMagic(){
+      magicOn = !magicOn;
+      $("btnMagic").textContent = magicOn ? "Magic: on ✨" : "Magic: off";
+      log(`Magic ${magicOn ? "on" : "off"}.`);
+      saveState();
+      if (magicOn) sparkleSound();
+    }
+
+    function showHelp() {
+      const msg =
+`WOW gestures:
+- 🤏 PINCH: grab & move the orb
+- ✌️ PEACE: sparkle trail
+- 👍 THUMBS: confetti + LIKE
+- ✋ OPEN: light wave
+- ✊ FIST: shockwave
+
+Best accuracy:
+- Calibrate each gesture once (right panel)
+- Tune thumbs sliders if needed
+Saved automatically.`;
+      log(msg);
+      speak("Try pinch to grab the orb. Thumbs up makes confetti. Peace makes sparkles.");
+      alert(msg);
+    }
+
+    // =======================
+    // MediaPipe setup
+    // =======================
+    const videoEl = $("video");
+    const canvasEl = $("canvas");
+    const ctx = canvasEl.getContext("2d");
+
+    let camera = null;
+    let running = false;
+
+    // For speaking stable changes
+    let lastMajor = "—";
+    let lastSpoken = "—";
+    let lastSpeakTime = 0;
+
+    // last features for tuning + calibration
+    let lastFeatures = null;
+
+    function handednessText(results, handIdx){
+      try { return results.multiHandedness[handIdx].label; } catch { return "Unknown"; }
+    }
+
+    const hands = new Hands({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+
+    hands.setOptions({
+      maxNumHands: 2,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7
+    });
+
+    function buildFeatures(lm){
+      const angles = fingerAngles(lm);
+      const extRaw = extendedFromAnglesAndDistances(lm, angles);
+
+      const sThumb = emaUpdate("thumb", extRaw.thumb ? 1 : 0);
+      const sIdx   = emaUpdate("idx",   extRaw.index ? 1 : 0);
+      const sMid   = emaUpdate("mid",   extRaw.middle ? 1 : 0);
+      const sRing  = emaUpdate("ring",  extRaw.ring ? 1 : 0);
+      const sPinky = emaUpdate("pinky", extRaw.pinky ? 1 : 0);
+
+      const pinch = emaUpdate("pinch", pinchRatio(lm));
+
+      const pw = palmWidth(lm) || 1e-6;
+      const tIndexSep = emaUpdate("tIndexSep", dist(lm[4], lm[5]) / pw);
+      const tWristSep = emaUpdate("tWristSep", dist(lm[4], lm[0]) / pw);
+
+      const { parallel, upDelta } = computeThumbParallelAndUpDelta(lm);
+      const spar = emaUpdate("parallel", parallel);
+      const sup  = emaUpdate("upDelta", upDelta);
+
+      return {
+        pinch, tIndexSep, tWristSep, parallel: spar, upDelta: sup,
+        angles,
+        extThumb: sThumb, extIdx: sIdx, extMid: sMid, extRing: sRing, extPinky: sPinky
+      };
+    }
+
+    // =======================
+    // MAGIC interaction helpers
+    // =======================
+    function normToCanvas(nx, ny){
+      return { x: nx * canvasEl.width, y: ny * canvasEl.height };
+    }
+    function canvasToNorm(x, y){
+      return { x: x / canvasEl.width, y: y / canvasEl.height };
+    }
+
+    function updateOrb(dt, pinchActive, pinchPos){
+      // dt in seconds
+      if (!magicOn) return;
+
+      const damping = 0.92;
+      const spring = 18.0;
+
+      if (pinchActive && pinchPos) {
+        // grab if close enough
+        const dx = pinchPos.x - orb.x;
+        const dy = pinchPos.y - orb.y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (!orb.grabbed && d < orb.r*1.6) orb.grabbed = true;
+        if (orb.grabbed) {
+          // smooth-follow
+          orb.vx += dx * spring * dt;
+          orb.vy += dy * spring * dt;
+          addParticles("spark", orb.x, orb.y, 2, 0.7);
+        }
+      } else {
+        orb.grabbed = false;
+      }
+
+      // physics
+      orb.x += orb.vx * dt;
+      orb.y += orb.vy * dt;
+      orb.vx *= damping;
+      orb.vy *= damping;
+
+      // bounds
+      const r = orb.r;
+      if (orb.x < r) { orb.x = r; orb.vx *= -0.6; }
+      if (orb.x > 1-r) { orb.x = 1-r; orb.vx *= -0.6; }
+      if (orb.y < r) { orb.y = r; orb.vy *= -0.6; }
+      if (orb.y > 1-r) { orb.y = 1-r; orb.vy *= -0.6; }
+    }
+
+    function drawOrb(){
+      if (!magicOn) return;
+      const p = normToCanvas(orb.x, orb.y);
+      const R = orb.r * Math.min(canvasEl.width, canvasEl.height);
+
+      // glow
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const grad = ctx.createRadialGradient(p.x, p.y, R*0.1, p.x, p.y, R*2.2);
+      grad.addColorStop(0, orb.grabbed ? "rgba(180,255,255,0.95)" : "rgba(160,210,255,0.9)");
+      grad.addColorStop(0.25, "rgba(120,160,255,0.35)");
+      grad.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(p.x, p.y, R*2.2, 0, Math.PI*2); ctx.fill();
+
+      // core
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = "rgba(240,250,255,0.92)";
+      ctx.beginPath(); ctx.arc(p.x, p.y, R*0.9, 0, Math.PI*2); ctx.fill();
+
+      ctx.restore();
+    }
+
+    function updateParticles(dt){
+      if (!magicOn) return;
+
+      for (let i = particles.length-1; i>=0; i--){
+        const p = particles[i];
+        p.age += dt;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.0006; // gravity-ish in normalized coords
+        if (p.age > p.life) particles.splice(i,1);
+      }
+
+      for (let i = bursts.length-1; i>=0; i--){
+        const b = bursts[i];
+        b.age += dt;
+        if (b.age > b.life) bursts.splice(i,1);
+      }
+
+      for (let i = likes.length-1; i>=0; i--){
+        const l = likes[i];
+        l.age += dt;
+        l.y -= l.rise * dt;
+        if (l.age > l.life) likes.splice(i,1);
+      }
+    }
+
+    function drawParticles(){
+      if (!magicOn) return;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+
+      // particles
+      for (const p of particles){
+        const a = 1 - (p.age / p.life);
+        const P = normToCanvas(p.x, p.y);
+        const s = p.size * (0.6 + 0.9*a);
+        ctx.globalAlpha = a;
+        if (p.kind === "confetti") {
+          ctx.fillStyle = "rgba(255,255,255,0.8)";
+          ctx.fillRect(P.x - s/2, P.y - s/2, s, s*0.6);
+        } else {
+          // spark
+          ctx.fillStyle = "rgba(190,230,255,0.9)";
+          ctx.beginPath(); ctx.arc(P.x, P.y, s*0.5, 0, Math.PI*2); ctx.fill();
+        }
+      }
+
+      // bursts (shockwave / light wave)
+      for (const b of bursts){
+        const a = 1 - (b.age / b.life);
+        const P = normToCanvas(b.x, b.y);
+        const r = (0.04 + 0.28*(b.age/b.life)) * Math.min(canvasEl.width, canvasEl.height) * b.strength;
+        ctx.globalAlpha = a*0.8;
+        ctx.strokeStyle = "rgba(180,220,255,0.9)";
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(P.x, P.y, r, 0, Math.PI*2); ctx.stroke();
+      }
+
+      // likes
+      for (const l of likes){
+        const a = 1 - (l.age / l.life);
+        const P = normToCanvas(l.x, l.y);
+        ctx.globalAlpha = a;
+        ctx.font = "bold 34px system-ui";
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.fillText("LIKE", P.x - 38, P.y);
+      }
+
+      ctx.restore();
+    }
+
+    // =======================
+    // Gesture-driven "magic"
+    // =======================
+    const cooldown = { thumbs:0, peace:0, open:0, fist:0 };
+    function tickCooldowns(dt){
+      for (const k of Object.keys(cooldown)) cooldown[k] = Math.max(0, cooldown[k] - dt);
+    }
+
+    function onGestureMagic(bestG, conf, lm){
+      if (!magicOn || !lm) return;
+      const dt = 1/30; // approx for cooldown logic
+
+      // pinch position (midpoint thumb tip & index tip)
+      let pinchPos = null;
+      if (bestG === "PINCH" && conf > 0.55) {
+        const mid = { x: (lm[4].x + lm[8].x)/2, y: (lm[4].y + lm[8].y)/2 };
+        pinchPos = mid;
+      }
+
+      // update orb based on pinch
+      updateOrb(dt, bestG === "PINCH" && conf > 0.55, pinchPos);
+
+      // PEACE => sparkle trail near index tip
+      if (bestG === "PEACE" && conf > 0.55 && cooldown.peace <= 0) {
+        const tip = lm[8];
+        addParticles("spark", tip.x, tip.y, 14, 1.0);
+        sparkleSound();
+        cooldown.peace = 0.18;
+      }
+
+      // OPEN => light wave burst from palm
+      if (bestG === "OPEN" && conf > 0.60 && cooldown.open <= 0) {
+        const palm = lm[0];
+        addBurst(palm.x, palm.y, 0.9);
+        addParticles("spark", palm.x, palm.y, 20, 0.9);
+        beep(440, 0.05, "sine", 0.03);
+        cooldown.open = 0.45;
+      }
+
+      // FIST => shockwave
+      if (bestG === "FIST" && conf > 0.60 && cooldown.fist <= 0) {
+        const palm = lm[0];
+        addBurst(palm.x, palm.y, 1.25);
+        addParticles("confetti", palm.x, palm.y, 18, 1.1);
+        beep(110, 0.05, "sawtooth", 0.03);
+        cooldown.fist = 0.55;
+      }
+
+      // THUMBS => confetti + LIKE
+      if (bestG === "THUMBS" && conf > 0.60 && cooldown.thumbs <= 0) {
+        const p = lm[4];
+        for (let i=0;i<80;i++){
+          particles.push({
+            kind:"confetti",
+            x:p.x, y:p.y,
+            vx: rand(-0.02,0.02)*1.2,
+            vy: rand(-0.02,0.005)*1.2,
+            life: rand(0.7, 1.35),
+            age: 0,
+            size: rand(3,7)
+          });
+        }
+        addLike(p.x, p.y);
+        confettiSound();
+        cooldown.thumbs = 0.9;
+      }
+    }
+
+    // =======================
+    // Calibration capture
+    // =======================
+    let calibTimer = null;
+    let calibSamples = [];
+    let calibTarget = null;
+
+    function setCalibText(text){ calibState.textContent = text; }
+
+    function startCalibration(gesture){
+      if (!running) { log("Start camera first."); return; }
+      if (calibTimer) { log("Calibration already running."); return; }
+      calibTarget = gesture;
+      calibSamples = [];
+
+      const msTotal = 2000;
+      const msStep = 50;
+      let remaining = msTotal;
+
+      setCalibText(`Calibration: ${gesture} — hold steady… ${Math.ceil(remaining/1000)}s`);
+      speak(`Calibrating ${gesture}. Hold steady.`);
+
+      calibTimer = setInterval(() => {
+        remaining -= msStep;
+        if (lastFeatures) calibSamples.push(vecFromFeatures(lastFeatures));
+
+        if (remaining <= 0) {
+          clearInterval(calibTimer);
+          calibTimer = null;
+
+          if (calibSamples.length < 10) {
+            setCalibText("Calibration failed: not enough samples (keep hand visible).");
+            log(`Calibration ${gesture} failed: too few samples.`);
+            speak("Calibration failed.");
+            calibTarget = null;
+            return;
+          }
+          fitTemplate(gesture, calibSamples);
+          setCalibText(`Calibration saved for ${gesture} (n=${calibSamples.length}).`);
+          log(`Calibration saved: ${gesture} (n=${calibSamples.length})`);
+          sparkleSound();
+          speak(`Calibration saved for ${gesture}.`);
+          calibTarget = null;
+        } else {
+          setCalibText(`Calibration: ${gesture} — hold steady… ${Math.ceil(remaining/1000)}s (samples=${calibSamples.length})`);
+        }
+      }, msStep);
+    }
+
+    function clearCalibration(){
+      templates.clear();
+      setCalibText("All calibration cleared.");
+      log("Cleared calibration templates.");
+      saveState();
+      speak("Calibration cleared.");
+    }
+
+    // =======================
+    // Voice commands
+    // =======================
+    function handleVoiceCommand(text) {
+      if (text.includes("start")) { start(); speak("Starting."); return; }
+      if (text.includes("stop")) { stop(); speak("Stopping."); return; }
+      if (text.includes("mute")) { ttsEnabled = false; $("btnTts").textContent = "Voice: off"; log("TTS muted."); return; }
+      if (text.includes("unmute")) { ttsEnabled = true; $("btnTts").textContent = "Voice: on"; speak("Voice enabled."); log("TTS unmuted."); return; }
+      if (text.includes("mirror")) { toggleMirror(); return; }
+      if (text.includes("magic")) { toggleMagic(); return; }
+      if (text.includes("help")) { showHelp(); return; }
+      speak("Command not recognized.");
+    }
+
+    // =======================
+    // Start/Stop camera
+    // =======================
+    async function start() {
+      if (running) return;
+      running = true;
+      $("btnStart").disabled = true;
+      $("btnStop").disabled = false;
+
+      setPill(camStatus, "📷 Camera: starting…", "warn");
+      log("Starting camera + magic hands…");
+
+      camera = new Camera(videoEl, {
+        onFrame: async () => { await hands.send({ image: videoEl }); },
+        width: 960,
+        height: 720
+      });
+
+      try {
+        camera.start();
+        setPill(camStatus, "📷 Camera: on", "ok");
+        try { $("connPill").classList.add("connected"); $("connText").textContent="CONNECTED"; } catch {}
+      } catch (e) {
+        setPill(camStatus, "📷 Camera: failed", "bad");
+        log("Camera failed. Use https/localhost + allow permissions.");
+      }
+    }
+
+    function stop() {
+      if (!running) return;
+      running = false;
+      $("btnStart").disabled = false;
+      $("btnStop").disabled = true;
+
+      try {
+        const stream = videoEl.srcObject;
+        if (stream) stream.getTracks().forEach(t => t.stop());
+        videoEl.srcObject = null;
+      } catch {}
+
+      labelHistory = [];
+      setPill(camStatus, "📷 Camera: off", "warn");
+      try { $("connPill").classList.remove("connected"); $("connText").textContent="DISCONNECTED"; } catch {}
+      setPill(handStatus, "✋ Hands: 0", "warn");
+      setPill(gestureStatus, "🧠 Gesture: —", "warn");
+      setPill(confStatus, "🎯 Confidence: —", "warn");
+      log("Stopped.");
+    }
+
+    // =======================
+    // Main render loop timing (for particles)
+    // =======================
+    let lastT = performance.now();
+    function animate(){
+      const now = performance.now();
+      const dt = Math.min(0.05, (now - lastT) / 1000);
+      lastT = now;
+
+      tickCooldowns(dt);
+      updateParticles(dt);
+
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    // =======================
+    // MediaPipe onResults
+    // =======================
+    hands.onResults((results) => {
+      ctx.save();
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+      // mirror camera if desired
+      if (mirror) {
+        ctx.translate(canvasEl.width, 0);
+        ctx.scale(-1, 1);
+      }
+
+      // draw camera frame
+      ctx.drawImage(results.image, 0, 0, canvasEl.width, canvasEl.height);
+
+      const count = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
+      setPill(handStatus, `✋ Hands: ${count}`, count ? "ok" : "warn");
+
+      let lmFirst = null;
+      let shownHand = "Unknown";
+
+      if (count > 0) {
+        lmFirst = results.multiHandLandmarks[0];
+        const rawHand = handednessText(results, 0);
+        shownHand = mirror ? (rawHand === "Left" ? "Right" : rawHand === "Right" ? "Left" : rawHand) : rawHand;
+
+        // landmarks
+        for (const landmarks of results.multiHandLandmarks) {
+          drawConnectors(ctx, landmarks, HAND_CONNECTIONS);
+          drawLandmarks(ctx, landmarks);
+        }
+
+        // features & classification
+        const f = buildFeatures(lmFirst);
+        lastFeatures = f;
+
+        const scores = gestureScores(f);
+        pushHistory(scores.bestG);
+        const major = majorityLabel();
+        const conf = scores.bestS;
+
+        setPill(gestureStatus, `🧠 Gesture: ${prettyGesture(major)}`, "ok");
+        setPill(confStatus, `🎯 Confidence: ${(conf*100).toFixed(0)}%`, conf > 0.70 ? "ok" : conf > 0.45 ? "warn" : "bad");
+
+        if (major !== lastMajor) {
+          lastMajor = major;
+          log(`Gesture: ${prettyGesture(major)} (${shownHand}) conf=${(conf*100).toFixed(0)}%`);
+        }
+
+        // speak stable changes
+        const tNow = Date.now();
+        if (ttsEnabled && major !== "—" && major !== lastSpoken && (tNow - lastSpeakTime > 900)) {
+          lastSpoken = major;
+          lastSpeakTime = tNow;
+          speak(prettyGesture(major).replace(/[^\w\s]/g, "").trim());
+        }
+
+        // MAGIC
+        onGestureMagic(scores.bestG, conf, lmFirst);
+
+        // DEBUG
+        if (debugOn) {
+          const rule = scores.rule, tmpl = scores.tmpl, comb = scores.combined;
+          const hasCal = Array.from(templates.keys()).join(", ") || "none";
+          debugEl.textContent =
+`hand=${shownHand}
+magicOn=${magicOn}
+calibrated=${hasCal}
+
+features:
+  pinch=${f.pinch.toFixed(3)}
+  parallel=${f.parallel.toFixed(3)}
+  upDelta=${f.upDelta.toFixed(3)}
+  thumbIndexSep=${f.tIndexSep.toFixed(3)}
+  thumbWristSep=${f.tWristSep.toFixed(3)}
+  ext:
+    thumb=${f.extThumb.toFixed(2)} idx=${f.extIdx.toFixed(2)} mid=${f.extMid.toFixed(2)} ring=${f.extRing.toFixed(2)} pinky=${f.extPinky.toFixed(2)}
+
+thumb thresholds:
+  sep>=${thumbsThr.sep.toFixed(2)} wsep>=${thumbsThr.wsep.toFixed(2)} up>=${thumbsThr.up.toFixed(3)} par<=${thumbsThr.par.toFixed(2)}
+
+scores (rule / tmpl / combined):
+  PINCH  ${rule.PINCH.toFixed(2)} / ${tmpl.PINCH==null?"—":tmpl.PINCH.toFixed(2)} / ${comb.PINCH.toFixed(2)}
+  THUMBS ${rule.THUMBS.toFixed(2)} / ${tmpl.THUMBS==null?"—":tmpl.THUMBS.toFixed(2)} / ${comb.THUMBS.toFixed(2)}
+  OPEN   ${rule.OPEN.toFixed(2)} / ${tmpl.OPEN==null?"—":tmpl.OPEN.toFixed(2)} / ${comb.OPEN.toFixed(2)}
+  FIST   ${rule.FIST.toFixed(2)} / ${tmpl.FIST==null?"—":tmpl.FIST.toFixed(2)} / ${comb.FIST.toFixed(2)}
+  PEACE  ${rule.PEACE.toFixed(2)} / ${tmpl.PEACE==null?"—":tmpl.PEACE.toFixed(2)} / ${comb.PEACE.toFixed(2)}
+  POINT  ${rule.POINT.toFixed(2)} / ${tmpl.POINT==null?"—":tmpl.POINT.toFixed(2)} / ${comb.POINT.toFixed(2)}
+
+best=${scores.bestG} (${prettyGesture(scores.bestG)}) bestScore=${scores.bestS.toFixed(2)}
+voteHistory=${labelHistory.slice(0,9).join(",")}
+particles=${particles.length} bursts=${bursts.length} likes=${likes.length}
+`;
+        } else {
+          debugEl.textContent = "Debug is off.";
+        }
+
+      } else {
+        lastFeatures = null;
+        labelHistory = [];
+        setPill(gestureStatus, "🧠 Gesture: —", "warn");
+        setPill(confStatus, "🎯 Confidence: —", "warn");
+        if (debugOn) debugEl.textContent = "No hand detected.";
+      }
+
+      // draw magic visuals on top (still mirrored coordinate space)
+      drawParticles();
+      drawOrb();
+
+      ctx.restore();
+    });
+
+    // =======================
+    // Wiring: sliders + buttons
+    // =======================
+    $("btnStart").onclick = start;
+    $("btnStop").onclick = stop;
+    $("btnMirror").onclick = toggleMirror;
+    $("btnMagic").onclick = toggleMagic;
+    $("btnHelp").onclick = showHelp;
+    $("btnClear").onclick = () => logEl.textContent = "";
+
+    $("btnDebug").onclick = () => {
+      debugOn = !debugOn;
+      $("btnDebug").textContent = debugOn ? "Debug: on" : "Debug: off";
+      log(`Debug ${debugOn ? "on" : "off"}.`);
+    };
+
+    // Speech buttons
+    $("btnMic").onclick = () => {
+      if (!speechEnabled) {
+        const ok = rec ? true : setupSpeech();
+        if (!ok) return;
+        speechEnabled = true;
+        try { rec.start(); } catch {}
+        $("btnMic").textContent = "Disable speech";
+        log("Speech recognition enabled.");
+        speak("Speech enabled.");
+      } else {
+        speechEnabled = false;
+        try { rec.stop(); } catch {}
+        $("btnMic").textContent = "Enable speech";
+        setPill(speechStatus, "🎙️ Speech: off", "warn");
+        log("Speech recognition disabled.");
+        speak("Speech disabled.");
+      }
+    };
+
+    $("btnTts").onclick = () => {
+      ttsEnabled = !ttsEnabled;
+      $("btnTts").textContent = ttsEnabled ? "Voice: on" : "Voice: off";
+      log(`TTS ${ttsEnabled ? "enabled" : "disabled"}.`);
+      saveState();
+      if (ttsEnabled) speak("Voice enabled.");
+    };
+
+    // Sliders -> thresholds
+    $("s_sep").oninput  = (e) => { thumbsThr.sep  = parseFloat(e.target.value); syncSliderUI(); };
+    $("s_wsep").oninput = (e) => { thumbsThr.wsep = parseFloat(e.target.value); syncSliderUI(); };
+    $("s_up").oninput   = (e) => { thumbsThr.up   = parseFloat(e.target.value); syncSliderUI(); };
+    $("s_par").oninput  = (e) => { thumbsThr.par  = parseFloat(e.target.value); syncSliderUI(); };
+
+    // Use current helpers
+    $("use_sep").onclick = () => {
+      if (!lastFeatures) return log("No hand detected.");
+      thumbsThr.sep = clamp(lastFeatures.tIndexSep - 0.05, 0.20, 1.10);
+      syncSliderUI(); log("Set sep from current frame (minus margin).");
+    };
+    $("use_wsep").onclick = () => {
+      if (!lastFeatures) return log("No hand detected.");
+      thumbsThr.wsep = clamp(lastFeatures.tWristSep - 0.08, 0.40, 1.60);
+      syncSliderUI(); log("Set wristSep from current frame (minus margin).");
+    };
+    $("use_up").onclick = () => {
+      if (!lastFeatures) return log("No hand detected.");
+      thumbsThr.up = clamp(lastFeatures.upDelta - 0.01, 0.00, 0.20);
+      syncSliderUI(); log("Set upDelta from current frame (minus margin).");
+    };
+    $("use_par").onclick = () => {
+      if (!lastFeatures) return log("No hand detected.");
+      thumbsThr.par = clamp(lastFeatures.parallel + 0.08, 0.10, 1.00);
+      syncSliderUI(); log("Set parallelMax from current frame (plus margin).");
+    };
+
+    // Calibration buttons
+    document.querySelectorAll(".calibBtn").forEach(btn => {
+      btn.onclick = () => startCalibration(btn.dataset.gesture);
+    });
+
+    $("btnClearCalib").onclick = clearCalibration;
+    $("btnResetAll").onclick = resetAllSaved;
+
+    // =======================
+    // Slider UI init
+    // =======================
+    function initSliderUI(){
+      $("v_sep").textContent = thumbsThr.sep.toFixed(2);
+      $("v_wsep").textContent = thumbsThr.wsep.toFixed(2);
+      $("v_up").textContent = thumbsThr.up.toFixed(3);
+      $("v_par").textContent = thumbsThr.par.toFixed(2);
+      $("s_sep").value = thumbsThr.sep;
+      $("s_wsep").value = thumbsThr.wsep;
+      $("s_up").value = thumbsThr.up;
+      $("s_par").value = thumbsThr.par;
+      saveState();
+    }
+
+    // =======================
+    // Load persisted state
+    // =======================
+    loadState();
+    initSliderUI();
+
+    // reflect toggles
+    $("btnMirror").textContent = mirror ? "Mirror: on" : "Mirror: off";
+    $("btnMagic").textContent = magicOn ? "Magic: on ✨" : "Magic: off";
+
+    // Initial pills
+    setPill(camStatus, "📷 Camera: off", "warn");
+    setPill(handStatus, "✋ Hands: 0", "warn");
+    setPill(gestureStatus, "🧠 Gesture: —", "warn");
+    setPill(confStatus, "🎯 Confidence: —", "warn");
+    setPill(speechStatus, "🎙️ Speech: off", "warn");
+    setCalibText("No calibration in progress.");
+    log("Ready. Click Start. Calibrate once. Then try pinch to grab the orb ✨");
+
+    // fun: place orb randomly each load
+    orb.x = rand(0.25, 0.75);
+    orb.y = rand(0.30, 0.75);
+
+  </script>
+</body>
+</html>

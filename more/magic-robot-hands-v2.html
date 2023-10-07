@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🤖 Magic Robot Hands V2 - Mega Demo for Kids!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --neon-pink: #ff2d95;
+      --neon-blue: #00d4ff;
+      --neon-green: #39ff14;
+      --neon-yellow: #fff700;
+      --neon-purple: #bf00ff;
+      --neon-orange: #ff6600;
+      --dark-bg: #0a0a1a;
+      --card-bg: rgba(20, 20, 40, 0.9);
+    }
+    
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--dark-bg);
+      background-image: 
+        radial-gradient(ellipse at 20% 80%, rgba(191, 0, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(0, 212, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(255, 45, 149, 0.1) 0%, transparent 60%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    
+    /* Animated stars background */
+    .stars {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .star {
+      position: absolute;
+      width: 3px; height: 3px;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle 2s infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.5); }
+    }
+    
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 20px;
+      position: relative;
+      z-index: 10;
+    }
+    .header h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      background: linear-gradient(135deg, var(--neon-pink), var(--neon-blue), var(--neon-green), var(--neon-yellow));
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: rainbowShift 4s ease infinite;
+      text-shadow: 0 0 30px rgba(255, 45, 149, 0.5);
+      filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.5));
+    }
+    @keyframes rainbowShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .header p {
+      font-size: 1.1rem;
+      color: #aaa;
+      margin-top: 8px;
+    }
+    
+    /* Main layout */
+    .main-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1600px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 10;
+    }
+    @media (max-width: 1200px) {
+      .main-container { grid-template-columns: 1fr; }
+    }
+    
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border-radius: 24px;
+      padding: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      box-shadow: 
+        0 0 40px rgba(0, 212, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+    .card:hover {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 60px rgba(0, 212, 255, 0.2);
+    }
+    .card-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.4rem;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title .icon {
+      font-size: 1.8rem;
+      animation: bounce 2s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    
+    /* Camera section */
+    .camera-section {
+      grid-column: 1 / -1;
+    }
+    .camera-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .camera-grid { grid-template-columns: 1fr; }
+    }
+    
+    video { display: none; }
+    canvas {
+      width: 100%;
+      height: auto;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Control buttons */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .btn {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s;
+    }
+    .btn:hover::before { left: 100%; }
+    
+    .btn-start {
+      background: linear-gradient(135deg, var(--neon-green), #00aa00);
+      color: #000;
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.5);
+    }
+    .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(57, 255, 20, 0.8); }
+    
+    .btn-stop {
+      background: linear-gradient(135deg, var(--neon-pink), #cc0066);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(255, 45, 149, 0.5);
+    }
+    .btn-stop:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(255, 45, 149, 0.8); }
+    
+    .btn-mode {
+      background: linear-gradient(135deg, var(--neon-blue), #0099cc);
+      color: #000;
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    }
+    .btn-mode:hover { transform: scale(1.05); }
+    .btn-mode.active {
+      background: linear-gradient(135deg, var(--neon-yellow), var(--neon-orange));
+      box-shadow: 0 0 30px rgba(255, 247, 0, 0.8);
+    }
+    
+    .btn-sound {
+      background: linear-gradient(135deg, var(--neon-purple), #8800aa);
+      color: #fff;
+    }
+    
+    /* Status pills */
+    .status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .pill {
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+    .pill.ok { border-color: var(--neon-green); box-shadow: 0 0 15px rgba(57, 255, 20, 0.3); }
+    .pill.warn { border-color: var(--neon-yellow); box-shadow: 0 0 15px rgba(255, 247, 0, 0.3); }
+    .pill.bad { border-color: var(--neon-pink); box-shadow: 0 0 15px rgba(255, 45, 149, 0.3); }
+    
+    /* BIG finger count display */
+    .finger-count-display {
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      z-index: 100;
+      text-align: center;
+    }
+    .finger-count-display .big-number {
+      font-family: 'Fredoka One', cursive;
+      font-size: 8rem;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--neon-pink), var(--neon-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 30px var(--neon-pink));
+      transition: all 0.2s;
+    }
+    .finger-count-display .label {
+      font-size: 1rem;
+      color: #aaa;
+      margin-top: -10px;
+    }
+    .finger-count-display .finger-icons {
+      font-size: 2rem;
+      margin-top: 5px;
+    }
+    
+    /* Direction indicator */
+    .direction-display {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .direction-arrow {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      transition: all 0.3s;
+    }
+    .direction-arrow.active {
+      border-color: var(--neon-green);
+      box-shadow: 0 0 30px rgba(57, 255, 20, 0.5);
+      transform: scale(1.1);
+    }
+    .direction-arrow.left.active { border-color: var(--neon-blue); box-shadow: 0 0 30px rgba(0, 212, 255, 0.5); }
+    .direction-arrow.right.active { border-color: var(--neon-pink); box-shadow: 0 0 30px rgba(255, 45, 149, 0.5); }
+    .direction-arrow.up.active { border-color: var(--neon-green); box-shadow: 0 0 30px rgba(57, 255, 20, 0.5); }
+    .direction-arrow.down.active { border-color: var(--neon-yellow); box-shadow: 0 0 30px rgba(255, 247, 0, 0.5); }
+    
+    /* Robot Hand Display */
+    .robot-hand-container {
+      background: linear-gradient(135deg, #1a1a2e, #0f0f23);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .robot-hand-container::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: conic-gradient(from 0deg, transparent, var(--neon-blue), transparent, var(--neon-pink), transparent);
+      animation: rotateBg 10s linear infinite;
+      opacity: 0.1;
+    }
+    @keyframes rotateBg {
+      100% { transform: rotate(360deg); }
+    }
+    
+    .robot-hand-canvas {
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Gesture Commands Panel */
+    .gesture-commands {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .gesture-cmd {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 15px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .gesture-cmd .emoji {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .gesture-cmd .label {
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+    .gesture-cmd.active {
+      background: rgba(57, 255, 20, 0.2);
+      border-color: var(--neon-green);
+      box-shadow: 0 0 30px rgba(57, 255, 20, 0.4);
+      transform: scale(1.05);
+    }
+    .gesture-cmd.active .label { color: var(--neon-green); }
+    
+    /* Robot Arm Display */
+    .robot-arm-container {
+      position: relative;
+      height: 300px;
+      background: linear-gradient(180deg, #1a1a2e 0%, #0f0f23 100%);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    
+    /* Pick and Place Objects */
+    .playground {
+      position: relative;
+      height: 250px;
+      background: 
+        linear-gradient(180deg, transparent 0%, rgba(57, 255, 20, 0.1) 100%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 50px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 50px);
+      border-radius: 16px;
+      border: 2px dashed rgba(57, 255, 20, 0.3);
+    }
+    .pickup-object {
+      position: absolute;
+      width: 50px; height: 50px;
+      border-radius: 12px;
+      cursor: grab;
+      transition: transform 0.1s, box-shadow 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .pickup-object:hover {
+      transform: scale(1.1);
+    }
+    .pickup-object.grabbed {
+      cursor: grabbing;
+      box-shadow: 0 0 40px currentColor;
+      animation: pulse 0.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    .drop-zone {
+      position: absolute;
+      bottom: 10px;
+      width: 80px; height: 80px;
+      border: 3px dashed var(--neon-blue);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      color: var(--neon-blue);
+      opacity: 0.6;
+      transition: all 0.3s;
+    }
+    .drop-zone.hover {
+      opacity: 1;
+      background: rgba(0, 212, 255, 0.2);
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+    }
+    
+    /* Recording Panel */
+    .recording-panel {
+      background: rgba(255, 45, 149, 0.1);
+      border: 2px solid var(--neon-pink);
+      border-radius: 16px;
+      padding: 15px;
+    }
+    .recording-panel.recording {
+      animation: recordPulse 1s infinite;
+    }
+    @keyframes recordPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(255, 45, 149, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(255, 45, 149, 0.6); }
+    }
+    
+    .waypoints-list {
+      max-height: 150px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .waypoint {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      margin-bottom: 5px;
+      font-size: 0.85rem;
+    }
+    .waypoint-num {
+      background: var(--neon-pink);
+      color: #000;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    
+    /* Score Display */
+    .score-display {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--card-bg);
+      border: 2px solid var(--neon-yellow);
+      border-radius: 20px;
+      padding: 15px 25px;
+      z-index: 100;
+      box-shadow: 0 0 30px rgba(255, 247, 0, 0.3);
+    }
+    .score-display .label {
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    .score-display .value {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2rem;
+      color: var(--neon-yellow);
+      text-shadow: 0 0 20px var(--neon-yellow);
+    }
+    
+    /* Achievement popup */
+    .achievement {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
+      border-radius: 24px;
+      padding: 30px 50px;
+      text-align: center;
+      z-index: 200;
+      box-shadow: 0 0 100px rgba(191, 0, 255, 0.8);
+      transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    .achievement.show {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .achievement .emoji { font-size: 4rem; }
+    .achievement .text {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem;
+      margin-top: 10px;
+    }
+    
+    /* Servo gauges */
+    .servo-panel {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 15px;
+    }
+    .servo-gauge {
+      text-align: center;
+    }
+    .servo-gauge .name {
+      font-size: 0.75rem;
+      color: #888;
+      margin-bottom: 5px;
+    }
+    .servo-gauge .bar-bg {
+      height: 80px;
+      width: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+    .servo-gauge .bar-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: linear-gradient(180deg, var(--neon-green), var(--neon-blue));
+      border-radius: 10px;
+      transition: height 0.1s;
+    }
+    .servo-gauge .value {
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.8rem;
+      margin-top: 5px;
+      color: var(--neon-green);
+    }
+    
+    /* Mode tabs */
+    .mode-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .mode-tab {
+      flex: 1;
+      min-width: 100px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Fredoka One', cursive;
+    }
+    .mode-tab:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .mode-tab.active {
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    }
+    .mode-tab .icon { font-size: 1.5rem; }
+    .mode-tab .label { font-size: 0.75rem; margin-top: 5px; }
+    
+    /* Robot face */
+    .robot-face {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 15px;
+      position: relative;
+    }
+    .robot-face .head {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #3a3a5a, #2a2a4a);
+      border-radius: 20px;
+      border: 3px solid var(--neon-blue);
+      position: relative;
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+    }
+    .robot-face .eye {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: var(--neon-green);
+      border-radius: 50%;
+      top: 30px;
+      box-shadow: 0 0 20px var(--neon-green);
+      transition: all 0.3s;
+    }
+    .robot-face .eye.left { left: 20px; }
+    .robot-face .eye.right { right: 20px; }
+    .robot-face .eye .pupil {
+      width: 8px;
+      height: 8px;
+      background: #000;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.2s;
+    }
+    .robot-face .mouth {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 35px;
+      height: 12px;
+      border: 3px solid var(--neon-blue);
+      border-top: none;
+      border-radius: 0 0 20px 20px;
+      transition: all 0.3s;
+    }
+    .robot-face.happy .mouth {
+      border-color: var(--neon-green);
+      height: 18px;
+    }
+    .robot-face.excited .eye {
+      background: var(--neon-yellow);
+      box-shadow: 0 0 30px var(--neon-yellow);
+    }
+    .robot-face.working .eye {
+      animation: blink 0.5s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(0.1); }
+    }
+    
+    /* Instructions overlay */
+    .instructions-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .instructions-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .instructions-content {
+      background: var(--card-bg);
+      border-radius: 24px;
+      padding: 30px;
+      max-width: 650px;
+      max-height: 90vh;
+      overflow-y: auto;
+      text-align: center;
+      border: 2px solid var(--neon-blue);
+      box-shadow: 0 0 60px rgba(0, 212, 255, 0.5);
+    }
+    .instructions-content h2 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      color: var(--neon-blue);
+    }
+    .instructions-content .gesture-list {
+      text-align: left;
+      margin: 20px 0;
+    }
+    .instructions-content .gesture-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .instructions-content .gesture-item .emoji { font-size: 1.8rem; }
+    .instructions-content .gesture-item .desc { flex: 1; font-size: 0.95rem; }
+    
+    /* Floating particles */
+    .floating-particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 50;
+      animation: floatUp 2s ease-out forwards;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-100px) scale(0); }
+    }
+    
+    /* Log panel */
+    .log-panel {
+      grid-column: 1 / -1;
+    }
+    #log {
+      max-height: 150px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 12px;
+      line-height: 1.4;
+    }
+    
+    /* Number display animations */
+    .finger-count-display .big-number.pop {
+      animation: popNumber 0.3s ease;
+    }
+    @keyframes popNumber {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated stars -->
+  <div class="stars" id="stars"></div>
+  
+  <!-- Direction display -->
+  <div class="direction-display">
+    <div class="direction-arrow left" id="dirLeft">⬅️</div>
+    <div class="direction-arrow up" id="dirUp">⬆️</div>
+    <div class="direction-arrow down" id="dirDown">⬇️</div>
+    <div class="direction-arrow right" id="dirRight">➡️</div>
+  </div>
+  
+  <!-- Score display -->
+  <div class="score-display">
+    <div class="label">⭐ SCORE</div>
+    <div class="value" id="scoreValue">0</div>
+  </div>
+  
+  <!-- Finger count display -->
+  <div class="finger-count-display">
+    <div class="big-number" id="fingerCountBig">0</div>
+    <div class="label">FINGERS</div>
+    <div class="finger-icons" id="fingerIcons">☝️</div>
+  </div>
+  
+  <!-- Achievement popup -->
+  <div class="achievement" id="achievement">
+    <div class="emoji" id="achievementEmoji">🏆</div>
+    <div class="text" id="achievementText">Amazing!</div>
+  </div>
+  
+  <!-- Instructions overlay -->
+  <div class="instructions-overlay" id="instructionsOverlay">
+    <div class="instructions-content">
+      <h2>🤖 How to Control the Robot!</h2>
+      <div class="gesture-list">
+        <div class="gesture-item">
+          <span class="emoji">✋</span>
+          <span class="desc"><b>OPEN HAND (5 fingers)</b> - Stop robot / Wave!</span>
+        </div>
+        <div class="gesture-item">
+          <span class="emoji">✊</span>
+          <span class="desc"><b>FIST (0 fingers)</b> - Power mode!</span>
+        </div>
+        <div class="gesture-item">
+          <span class="emoji">🤏</span>
+          <span class="desc"><b>PINCH</b> - Grab objects!</span>
+        </div>
+        <div class="gesture-item">
+          <span class="emoji">☝️</span>
+          <span class="desc"><b>POINT (1 finger)</b> - Go there!</span>
+        </div>
+        <div class="gesture-item">
+          <span class="emoji">✌️</span>
+          <span class="desc"><b>PEACE (2 fingers)</b> - Follow me!</span>
+        </div>
+        <div class="gesture-item">
+          <span class="emoji">🤟</span>
+          <span class="desc"><b>THREE (3 fingers)</b> - Speed mode!</span>
+        </div>
+        <div class="gesture-item">
+          <span class="emoji">🖖</span>
+          <span class="desc"><b>FOUR (4 fingers)</b> - Slow mode!</span>
+        </div>
+        <div class="gesture-item">
+          <span class="emoji">👍</span>
+          <span class="desc"><b>THUMBS UP</b> - Great job! Confirm!</span>
+        </div>
+        <div class="gesture-item">
+          <span class="emoji">⬅️➡️⬆️⬇️</span>
+          <span class="desc"><b>DIRECTIONS</b> - Move hand to point direction!</span>
+        </div>
+      </div>
+      <button class="btn btn-start" onclick="closeInstructions()">Let's Go! 🚀</button>
+    </div>
+  </div>
+  
+  <div class="header">
+    <h1>🤖 Magic Robot Hands V2 🦾</h1>
+    <p>Control robots with your hands! • Count fingers • Point directions! ✨</p>
+  </div>
+  
+  <div class="main-container">
+    <!-- Camera Section -->
+    <div class="card camera-section">
+      <div class="status-bar">
+        <span class="pill" id="camStatus">📷 Camera: off</span>
+        <span class="pill" id="handStatus">✋ Hands: 0</span>
+        <span class="pill" id="gestureStatus">🧠 Gesture: —</span>
+        <span class="pill" id="fingerStatus">🖐️ Fingers: 0</span>
+        <span class="pill" id="directionStatus">🧭 Direction: —</span>
+        <span class="pill" id="modeStatus">🎮 Mode: Teleoperation</span>
+      </div>
+      
+      <div class="camera-grid">
+        <div>
+          <video id="video" playsinline></video>
+          <canvas id="canvas" width="640" height="480"></canvas>
+          
+          <div class="controls">
+            <button class="btn btn-start" id="btnStart">▶️ Start Camera</button>
+            <button class="btn btn-stop" id="btnStop" disabled>⏹️ Stop</button>
+            <button class="btn btn-sound" id="btnSound">🔊 Sound: ON</button>
+            <button class="btn btn-mode" id="btnHelp">❓ Help</button>
+          </div>
+        </div>
+        
+        <div class="robot-hand-container">
+          <div class="card-title"><span class="icon">🦾</span> Robot Hand</div>
+          <div class="robot-face" id="robotFace">
+            <div class="head">
+              <div class="eye left"><div class="pupil"></div></div>
+              <div class="eye right"><div class="pupil"></div></div>
+              <div class="mouth"></div>
+            </div>
+          </div>
+          <canvas id="robotHandCanvas" class="robot-hand-canvas" width="200" height="200"></canvas>
+          <div class="servo-panel" id="servoPanel">
+            <div class="servo-gauge">
+              <div class="name">Thumb</div>
+              <div class="bar-bg"><div class="bar-fill" id="servo0" style="height:50%"></div></div>
+              <div class="value" id="servoVal0">90°</div>
+            </div>
+            <div class="servo-gauge">
+              <div class="name">Index</div>
+              <div class="bar-bg"><div class="bar-fill" id="servo1" style="height:50%"></div></div>
+              <div class="value" id="servoVal1">90°</div>
+            </div>
+            <div class="servo-gauge">
+              <div class="name">Middle</div>
+              <div class="bar-bg"><div class="bar-fill" id="servo2" style="height:50%"></div></div>
+              <div class="value" id="servoVal2">90°</div>
+            </div>
+            <div class="servo-gauge">
+              <div class="name">Ring</div>
+              <div class="bar-bg"><div class="bar-fill" id="servo3" style="height:50%"></div></div>
+              <div class="value" id="servoVal3">90°</div>
+            </div>
+            <div class="servo-gauge">
+              <div class="name">Pinky</div>
+              <div class="bar-bg"><div class="bar-fill" id="servo4" style="height:50%"></div></div>
+              <div class="value" id="servoVal4">90°</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Mode Selection -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🎮</span> Robot Mode</div>
+      <div class="mode-tabs">
+        <div class="mode-tab active" data-mode="teleop">
+          <div class="icon">🦾</div>
+          <div class="label">Hand Control</div>
+        </div>
+        <div class="mode-tab" data-mode="arm">
+          <div class="icon">🤖</div>
+          <div class="label">Robot Arm</div>
+        </div>
+        <div class="mode-tab" data-mode="pickup">
+          <div class="icon">📦</div>
+          <div class="label">Pick & Place</div>
+        </div>
+        <div class="mode-tab" data-mode="record">
+          <div class="icon">🎬</div>
+          <div class="label">Record Path</div>
+        </div>
+      </div>
+      
+      <!-- Teleop mode content -->
+      <div class="mode-content" id="mode-teleop">
+        <p style="color:#aaa; margin-bottom:15px;">Your hand controls the robot hand! Each finger moves a servo motor. Watch the BIG number - it counts your fingers!</p>
+        <div style="background:rgba(57,255,20,0.1); padding:15px; border-radius:12px; border:1px solid var(--neon-green);">
+          <b style="color:var(--neon-green);">💡 Tips:</b><br>
+          • Show 1, 2, 3, 4, 5 fingers!<br>
+          • Move hand LEFT/RIGHT/UP/DOWN!<br>
+          • Make a THUMBS UP! 👍
+        </div>
+      </div>
+      
+      <!-- Arm mode content -->
+      <div class="mode-content" id="mode-arm" style="display:none;">
+        <p style="color:#aaa; margin-bottom:15px;">Control a robot arm! Move your hand to position the arm, pinch to grab!</p>
+        <div class="robot-arm-container">
+          <canvas id="robotArmCanvas" width="400" height="280"></canvas>
+        </div>
+      </div>
+      
+      <!-- Pickup mode content -->
+      <div class="mode-content" id="mode-pickup" style="display:none;">
+        <p style="color:#aaa; margin-bottom:15px;">Grab the shapes and drop them in the matching zones! Use PINCH to grab!</p>
+        <div class="playground" id="playground">
+          <div class="pickup-object" id="obj1" style="left:50px; top:30px; background:var(--neon-pink);">⭐</div>
+          <div class="pickup-object" id="obj2" style="left:150px; top:80px; background:var(--neon-blue);">💎</div>
+          <div class="pickup-object" id="obj3" style="left:80px; top:130px; background:var(--neon-green);">🔮</div>
+          <div class="drop-zone" id="zone1" style="left:20px;">Zone 1</div>
+          <div class="drop-zone" id="zone2" style="left:120px;">Zone 2</div>
+          <div class="drop-zone" id="zone3" style="right:20px;">Zone 3</div>
+        </div>
+      </div>
+      
+      <!-- Record mode content -->
+      <div class="mode-content" id="mode-record" style="display:none;">
+        <p style="color:#aaa; margin-bottom:15px;">Record your hand movements and play them back! Like teaching a robot!</p>
+        <div class="recording-panel" id="recordingPanel">
+          <div class="controls" style="margin:0;">
+            <button class="btn btn-start" id="btnRecord">⏺️ Start Recording</button>
+            <button class="btn btn-stop" id="btnStopRecord" disabled>⏹️ Stop</button>
+            <button class="btn btn-mode" id="btnPlayback" disabled>▶️ Playback</button>
+            <button class="btn btn-sound" id="btnClearRecord">🗑️ Clear</button>
+          </div>
+          <div class="waypoints-list" id="waypointsList"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Gesture Commands -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🎯</span> Gesture Commands</div>
+      <div class="gesture-commands" id="gestureCommands">
+        <div class="gesture-cmd" data-gesture="OPEN">
+          <span class="emoji">✋</span>
+          <span class="label">STOP (5)</span>
+        </div>
+        <div class="gesture-cmd" data-gesture="FIST">
+          <span class="emoji">✊</span>
+          <span class="label">POWER (0)</span>
+        </div>
+        <div class="gesture-cmd" data-gesture="PINCH">
+          <span class="emoji">🤏</span>
+          <span class="label">GRAB</span>
+        </div>
+        <div class="gesture-cmd" data-gesture="POINT">
+          <span class="emoji">☝️</span>
+          <span class="label">GO (1)</span>
+        </div>
+        <div class="gesture-cmd" data-gesture="PEACE">
+          <span class="emoji">✌️</span>
+          <span class="label">FOLLOW (2)</span>
+        </div>
+        <div class="gesture-cmd" data-gesture="THUMBS">
+          <span class="emoji">👍</span>
+          <span class="label">CONFIRM</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Event Log -->
+    <div class="card log-panel">
+      <div class="card-title" style="justify-content:space-between; display:flex;">
+        <span><span class="icon">📜</span> Robot Log</span>
+        <button class="btn btn-mode" id="btnClearLog" style="padding:8px 16px; font-size:0.8rem;">Clear</button>
+      </div>
+      <div id="log"></div>
+    </div>
+  </div>
+  
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  
+  <script>
+    // ========================================
+    // MEGA ROBOT DEMO V2 - WITH FINGER COUNTING & DIRECTIONS!
+    // ========================================
+    
+    // DOM Elements
+    const $ = id => document.getElementById(id);
+    const video = $('video');
+    const canvas = $('canvas');
+    const ctx = canvas.getContext('2d');
+    const robotHandCanvas = $('robotHandCanvas');
+    const robotHandCtx = robotHandCanvas.getContext('2d');
+    const robotArmCanvas = $('robotArmCanvas');
+    const robotArmCtx = robotArmCanvas ? robotArmCanvas.getContext('2d') : null;
+    const logEl = $('log');
+    
+    // State
+    let hands = null;
+    let camera = null;
+    let running = false;
+    let soundEnabled = true;
+    let currentMode = 'teleop';
+    let score = 0;
+    let currentGesture = null;
+    let lastGesture = null;
+    let fingerExtensions = [0, 0, 0, 0, 0]; // thumb, index, middle, ring, pinky
+    let handPosition = { x: 0.5, y: 0.5 };
+    let isPinching = false;
+    
+    // NEW: Finger counting & direction
+    let fingerCount = 0;
+    let lastFingerCount = -1;
+    let handDirection = 'CENTER';
+    let lastDirection = '';
+    
+    // Recording state
+    let isRecording = false;
+    let recordedPath = [];
+    let isPlaying = false;
+    let playbackIndex = 0;
+    
+    // Pick and place state
+    let grabbedObject = null;
+    let objects = [];
+    
+    // Robot arm state
+    let armAngles = { base: 0, shoulder: 45, elbow: 45, wrist: 0, gripper: 0 };
+    
+    // Sound effects using Web Audio API
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+      if (!soundEnabled) return;
+      
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        switch(type) {
+          case 'grab':
+            osc.frequency.value = 440;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+            break;
+          case 'drop':
+            osc.frequency.value = 330;
+            osc.type = 'triangle';
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+            break;
+          case 'score':
+            osc.frequency.value = 660;
+            osc.type = 'square';
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            osc.start();
+            setTimeout(() => { osc.frequency.value = 880; }, 100);
+            osc.stop(audioCtx.currentTime + 0.3);
+            break;
+          case 'gesture':
+            osc.frequency.value = 520;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+            break;
+          case 'record':
+            osc.frequency.value = 880;
+            osc.type = 'sawtooth';
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+            break;
+          case 'count':
+            // Musical note based on finger count
+            const notes = [261, 294, 330, 349, 392, 440]; // C D E F G A
+            osc.frequency.value = notes[fingerCount] || 440;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+            break;
+          case 'direction':
+            osc.frequency.value = 350;
+            osc.type = 'triangle';
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+            break;
+          case 'thumbsup':
+            // Happy sound!
+            osc.frequency.value = 523;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            osc.start();
+            setTimeout(() => { osc.frequency.value = 659; }, 100);
+            setTimeout(() => { osc.frequency.value = 784; }, 200);
+            osc.stop(audioCtx.currentTime + 0.4);
+            break;
+        }
+      } catch(e) {
+        console.log('Audio error:', e);
+      }
+    }
+    
+    // Create stars background
+    function createStars() {
+      const starsEl = $('stars');
+      for (let i = 0; i < 100; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        star.style.animationDelay = Math.random() * 2 + 's';
+        star.style.width = star.style.height = (Math.random() * 3 + 1) + 'px';
+        starsEl.appendChild(star);
+      }
+    }
+    createStars();
+    
+    // Logging
+    function log(msg, type = 'info') {
+      const ts = new Date().toLocaleTimeString();
+      const colors = { info: '#00d4ff', success: '#39ff14', warn: '#fff700', error: '#ff2d95' };
+      logEl.innerHTML = `<span style="color:${colors[type]}">[${ts}]</span> ${msg}<br>` + logEl.innerHTML;
+    }
+    
+    // Status pills
+    function setPill(id, text, cls) {
+      const el = $(id);
+      el.classList.remove('ok', 'warn', 'bad');
+      if (cls) el.classList.add(cls);
+      el.textContent = text;
+    }
+    
+    // Score management
+    function addScore(points) {
+      score += points;
+      $('scoreValue').textContent = score;
+      $('scoreValue').style.transform = 'scale(1.3)';
+      setTimeout(() => $('scoreValue').style.transform = 'scale(1)', 200);
+      playSound('score');
+    }
+    
+    // Achievement popup
+    function showAchievement(emoji, text) {
+      $('achievementEmoji').textContent = emoji;
+      $('achievementText').textContent = text;
+      $('achievement').classList.add('show');
+      setTimeout(() => $('achievement').classList.remove('show'), 2000);
+    }
+    
+    // Floating particles
+    function spawnParticle(x, y, emoji) {
+      const particle = document.createElement('div');
+      particle.className = 'floating-particle';
+      particle.textContent = emoji;
+      particle.style.left = x + 'px';
+      particle.style.top = y + 'px';
+      particle.style.fontSize = (Math.random() * 20 + 20) + 'px';
+      document.body.appendChild(particle);
+      setTimeout(() => particle.remove(), 2000);
+    }
+    
+    // Instructions
+    function closeInstructions() {
+      $('instructionsOverlay').classList.remove('show');
+    }
+    
+    // ========================================
+    // GESTURE RECOGNITION - IMPROVED!
+    // ========================================
+    
+    function distance(p1, p2) {
+      return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+    }
+    
+    function distance3D(p1, p2) {
+      const z1 = p1.z || 0;
+      const z2 = p2.z || 0;
+      return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2 + (z1 - z2) ** 2);
+    }
+    
+    function getFingerExtension(landmarks, fingerBase, fingerTip, wrist) {
+      const baseToTip = distance(landmarks[fingerBase], landmarks[fingerTip]);
+      const baseToWrist = distance(landmarks[fingerBase], landmarks[wrist]);
+      return Math.min(1, Math.max(0, baseToTip / (baseToWrist * 1.5)));
+    }
+    
+    // NEW: Check if a finger is extended (improved)
+    function isFingerExtended(landmarks, fingerTip, fingerPip, fingerMcp, wrist) {
+      // A finger is extended if tip is further from wrist than PIP
+      // AND the tip-to-pip distance shows extension
+      const tipToWrist = distance(landmarks[fingerTip], landmarks[wrist]);
+      const pipToWrist = distance(landmarks[fingerPip], landmarks[wrist]);
+      const mcpToWrist = distance(landmarks[fingerMcp], landmarks[wrist]);
+      
+      return tipToWrist > pipToWrist * 1.1 && tipToWrist > mcpToWrist * 1.2;
+    }
+    
+    // NEW: Check if thumb is extended (special case)
+    function isThumbExtended(landmarks) {
+      const thumbTip = landmarks[4];
+      const thumbIp = landmarks[3];
+      const thumbMcp = landmarks[2];
+      const indexMcp = landmarks[5];
+      const wrist = landmarks[0];
+      
+      // Thumb is extended if tip is far from index MCP
+      const thumbToIndex = distance(thumbTip, indexMcp);
+      const thumbMcpToIndex = distance(thumbMcp, indexMcp);
+      
+      return thumbToIndex > thumbMcpToIndex * 1.2;
+    }
+    
+    // NEW: Count extended fingers
+    function countFingers(landmarks) {
+      let count = 0;
+      
+      // Thumb (special handling)
+      if (isThumbExtended(landmarks)) count++;
+      
+      // Index finger (tip:8, pip:6, mcp:5)
+      if (isFingerExtended(landmarks, 8, 6, 5, 0)) count++;
+      
+      // Middle finger (tip:12, pip:10, mcp:9)
+      if (isFingerExtended(landmarks, 12, 10, 9, 0)) count++;
+      
+      // Ring finger (tip:16, pip:14, mcp:13)
+      if (isFingerExtended(landmarks, 16, 14, 13, 0)) count++;
+      
+      // Pinky finger (tip:20, pip:18, mcp:17)
+      if (isFingerExtended(landmarks, 20, 18, 17, 0)) count++;
+      
+      return count;
+    }
+    
+    // NEW: Detect hand direction
+    function detectDirection(landmarks) {
+      const wrist = landmarks[0];
+      const middleMcp = landmarks[9];
+      const middleTip = landmarks[12];
+      
+      // Calculate hand center
+      const centerX = (wrist.x + middleMcp.x + middleTip.x) / 3;
+      const centerY = (wrist.y + middleMcp.y + middleTip.y) / 3;
+      
+      // Direction based on where hand is pointing (fingertip direction)
+      const dx = middleTip.x - wrist.x;
+      const dy = middleTip.y - wrist.y;
+      
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      
+      // Also consider hand position in frame
+      let direction = 'CENTER';
+      
+      // Based on pointing direction
+      if (Math.abs(dx) > Math.abs(dy) * 1.5) {
+        // Horizontal pointing
+        direction = dx > 0 ? 'RIGHT' : 'LEFT';
+      } else if (Math.abs(dy) > Math.abs(dx) * 1.5) {
+        // Vertical pointing
+        direction = dy > 0 ? 'DOWN' : 'UP';
+      } else {
+        // Use hand position in frame
+        if (centerX < 0.35) direction = 'LEFT';
+        else if (centerX > 0.65) direction = 'RIGHT';
+        else if (centerY < 0.35) direction = 'UP';
+        else if (centerY > 0.65) direction = 'DOWN';
+      }
+      
+      return direction;
+    }
+    
+    // NEW: Improved thumbs up detection
+    function isThumbsUp(landmarks) {
+      const wrist = landmarks[0];
+      const thumbTip = landmarks[4];
+      const thumbIp = landmarks[3];
+      const thumbMcp = landmarks[2];
+      const indexTip = landmarks[8];
+      const indexPip = landmarks[6];
+      const indexMcp = landmarks[5];
+      const middleTip = landmarks[12];
+      const ringTip = landmarks[16];
+      const pinkyTip = landmarks[20];
+      
+      // Thumb should be pointing UP (thumbTip.y < thumbMcp.y in screen coords)
+      const thumbPointingUp = thumbTip.y < thumbIp.y && thumbIp.y < thumbMcp.y;
+      
+      // Thumb should be extended (far from palm)
+      const thumbExtended = distance(thumbTip, wrist) > distance(thumbMcp, wrist) * 1.3;
+      
+      // Other fingers should be CURLED (tips close to palm/wrist or below MCP)
+      const indexCurled = indexTip.y > indexMcp.y || distance(indexTip, wrist) < distance(indexMcp, wrist) * 1.3;
+      const middleCurled = middleTip.y > landmarks[9].y || distance(middleTip, wrist) < distance(landmarks[9], wrist) * 1.3;
+      const ringCurled = ringTip.y > landmarks[13].y || distance(ringTip, wrist) < distance(landmarks[13], wrist) * 1.3;
+      const pinkyCurled = pinkyTip.y > landmarks[17].y || distance(pinkyTip, wrist) < distance(landmarks[17], wrist) * 1.3;
+      
+      // Thumb should be separated from index finger
+      const thumbIndexSeparation = distance(thumbTip, indexTip) > 0.1;
+      
+      return thumbPointingUp && thumbExtended && indexCurled && middleCurled && ringCurled && pinkyCurled && thumbIndexSeparation;
+    }
+    
+    function recognizeGesture(landmarks) {
+      if (!landmarks || landmarks.length < 21) return null;
+      
+      const wrist = landmarks[0];
+      const thumbTip = landmarks[4];
+      const indexTip = landmarks[8];
+      const middleTip = landmarks[12];
+      const ringTip = landmarks[16];
+      const pinkyTip = landmarks[20];
+      
+      const indexMcp = landmarks[5];
+      const middleMcp = landmarks[9];
+      const ringMcp = landmarks[13];
+      const pinkyMcp = landmarks[17];
+      
+      // Calculate finger extensions (for servo control)
+      fingerExtensions[0] = getFingerExtension(landmarks, 2, 4, 0); // thumb
+      fingerExtensions[1] = getFingerExtension(landmarks, 5, 8, 0); // index
+      fingerExtensions[2] = getFingerExtension(landmarks, 9, 12, 0); // middle
+      fingerExtensions[3] = getFingerExtension(landmarks, 13, 16, 0); // ring
+      fingerExtensions[4] = getFingerExtension(landmarks, 17, 20, 0); // pinky
+      
+      // NEW: Count fingers
+      fingerCount = countFingers(landmarks);
+      
+      // NEW: Detect direction
+      handDirection = detectDirection(landmarks);
+      
+      // Pinch detection
+      const pinchDist = distance(thumbTip, indexTip);
+      isPinching = pinchDist < 0.08;
+      
+      // Extension checks (improved)
+      const indexExt = isFingerExtended(landmarks, 8, 6, 5, 0);
+      const middleExt = isFingerExtended(landmarks, 12, 10, 9, 0);
+      const ringExt = isFingerExtended(landmarks, 16, 14, 13, 0);
+      const pinkyExt = isFingerExtended(landmarks, 20, 18, 17, 0);
+      
+      // THUMBS UP - Check first (highest priority)
+      if (isThumbsUp(landmarks)) {
+        return 'THUMBS';
+      }
+      
+      // Pinch gesture
+      if (isPinching && !middleExt && !ringExt && !pinkyExt) {
+        return 'PINCH';
+      }
+      
+      // Open hand (5 fingers)
+      if (fingerCount >= 4 && indexExt && middleExt && ringExt) {
+        return 'OPEN';
+      }
+      
+      // Fist (0 fingers)
+      if (fingerCount === 0 || (!indexExt && !middleExt && !ringExt && !pinkyExt && !isThumbExtended(landmarks))) {
+        return 'FIST';
+      }
+      
+      // Peace sign (2 fingers - index and middle)
+      if (indexExt && middleExt && !ringExt && !pinkyExt) {
+        return 'PEACE';
+      }
+      
+      // Point (1 finger - index only)
+      if (indexExt && !middleExt && !ringExt && !pinkyExt) {
+        return 'POINT';
+      }
+      
+      // Three fingers
+      if (indexExt && middleExt && ringExt && !pinkyExt) {
+        return 'THREE';
+      }
+      
+      // Four fingers
+      if (indexExt && middleExt && ringExt && pinkyExt && !isThumbExtended(landmarks)) {
+        return 'FOUR';
+      }
+      
+      return null;
+    }
+    
+    // ========================================
+    // UPDATE FINGER COUNT DISPLAY
+    // ========================================
+    
+    function updateFingerCountDisplay() {
+      const bigNum = $('fingerCountBig');
+      const icons = $('fingerIcons');
+      
+      if (fingerCount !== lastFingerCount) {
+        bigNum.textContent = fingerCount;
+        bigNum.classList.remove('pop');
+        void bigNum.offsetWidth; // Trigger reflow
+        bigNum.classList.add('pop');
+        
+        // Update finger icons
+        const fingerEmojis = ['✊', '☝️', '✌️', '🤟', '🖖', '🖐️'];
+        icons.textContent = fingerEmojis[fingerCount] || '✊';
+        
+        // Play sound for finger count changes
+        playSound('count');
+        
+        setPill('fingerStatus', `🖐️ Fingers: ${fingerCount}`, 'ok');
+        
+        lastFingerCount = fingerCount;
+      }
+    }
+    
+    // ========================================
+    // UPDATE DIRECTION DISPLAY
+    // ========================================
+    
+    function updateDirectionDisplay() {
+      // Reset all arrows
+      ['dirLeft', 'dirRight', 'dirUp', 'dirDown'].forEach(id => {
+        $(id).classList.remove('active');
+      });
+      
+      // Activate current direction
+      const dirMap = {
+        'LEFT': 'dirLeft',
+        'RIGHT': 'dirRight',
+        'UP': 'dirUp',
+        'DOWN': 'dirDown'
+      };
+      
+      if (dirMap[handDirection]) {
+        $(dirMap[handDirection]).classList.add('active');
+      }
+      
+      if (handDirection !== lastDirection && handDirection !== 'CENTER') {
+        playSound('direction');
+        log(`Direction: ${handDirection}`, 'info');
+        lastDirection = handDirection;
+      }
+      
+      const dirEmojis = { LEFT: '⬅️', RIGHT: '➡️', UP: '⬆️', DOWN: '⬇️', CENTER: '⏺️' };
+      setPill('directionStatus', `🧭 Direction: ${dirEmojis[handDirection] || '—'} ${handDirection}`, handDirection !== 'CENTER' ? 'ok' : 'warn');
+    }
+    
+    // ========================================
+    // ROBOT HAND VISUALIZATION
+    // ========================================
+    
+    function drawRobotHand() {
+      const w = robotHandCanvas.width;
+      const h = robotHandCanvas.height;
+      robotHandCtx.clearRect(0, 0, w, h);
+      
+      // Palm
+      robotHandCtx.fillStyle = '#3a3a5a';
+      robotHandCtx.strokeStyle = '#00d4ff';
+      robotHandCtx.lineWidth = 2;
+      
+      // Draw palm base
+      robotHandCtx.beginPath();
+      robotHandCtx.roundRect(60, 100, 80, 80, 10);
+      robotHandCtx.fill();
+      robotHandCtx.stroke();
+      
+      // Draw fingers
+      const fingerPositions = [
+        { x: 30, y: 90, angle: -30 },  // thumb
+        { x: 70, y: 100, angle: 0 },   // index
+        { x: 100, y: 95, angle: 0 },   // middle
+        { x: 125, y: 100, angle: 0 },  // ring
+        { x: 150, y: 110, angle: 15 }  // pinky
+      ];
+      
+      const fingerColors = ['#ff2d95', '#00d4ff', '#39ff14', '#fff700', '#bf00ff'];
+      
+      fingerPositions.forEach((pos, i) => {
+        const ext = fingerExtensions[i];
+        const length = 30 + ext * 40;
+        
+        robotHandCtx.save();
+        robotHandCtx.translate(pos.x, pos.y);
+        robotHandCtx.rotate(pos.angle * Math.PI / 180);
+        
+        // Finger segments
+        robotHandCtx.fillStyle = '#4a4a6a';
+        robotHandCtx.strokeStyle = fingerColors[i];
+        robotHandCtx.lineWidth = 2;
+        
+        // Base segment
+        robotHandCtx.beginPath();
+        robotHandCtx.roundRect(-8, -length * 0.3, 16, length * 0.35, 4);
+        robotHandCtx.fill();
+        robotHandCtx.stroke();
+        
+        // Middle segment
+        robotHandCtx.beginPath();
+        robotHandCtx.roundRect(-7, -length * 0.65, 14, length * 0.3, 4);
+        robotHandCtx.fill();
+        robotHandCtx.stroke();
+        
+        // Tip segment
+        robotHandCtx.beginPath();
+        robotHandCtx.roundRect(-6, -length, 12, length * 0.3, 6);
+        robotHandCtx.fill();
+        robotHandCtx.stroke();
+        
+        // Joint circles
+        robotHandCtx.fillStyle = fingerColors[i];
+        [-length * 0.3, -length * 0.65].forEach(y => {
+          robotHandCtx.beginPath();
+          robotHandCtx.arc(0, y, 4, 0, Math.PI * 2);
+          robotHandCtx.fill();
+        });
+        
+        robotHandCtx.restore();
+      });
+      
+      // Glow effect if pinching
+      if (isPinching) {
+        robotHandCtx.shadowColor = '#ff2d95';
+        robotHandCtx.shadowBlur = 20;
+        robotHandCtx.fillStyle = 'rgba(255, 45, 149, 0.3)';
+        robotHandCtx.beginPath();
+        robotHandCtx.arc(50, 50, 30, 0, Math.PI * 2);
+        robotHandCtx.fill();
+        robotHandCtx.shadowBlur = 0;
+      }
+    }
+    
+    // ========================================
+    // ROBOT ARM VISUALIZATION
+    // ========================================
+    
+    function drawRobotArm() {
+      if (!robotArmCtx) return;
+      
+      const w = robotArmCanvas.width;
+      const h = robotArmCanvas.height;
+      robotArmCtx.clearRect(0, 0, w, h);
+      
+      // Ground
+      robotArmCtx.fillStyle = 'rgba(57, 255, 20, 0.1)';
+      robotArmCtx.fillRect(0, h - 30, w, 30);
+      
+      // Base
+      const baseX = 100;
+      const baseY = h - 30;
+      
+      robotArmCtx.fillStyle = '#3a3a5a';
+      robotArmCtx.strokeStyle = '#00d4ff';
+      robotArmCtx.lineWidth = 3;
+      
+      // Base platform
+      robotArmCtx.beginPath();
+      robotArmCtx.roundRect(baseX - 40, baseY - 20, 80, 20, 5);
+      robotArmCtx.fill();
+      robotArmCtx.stroke();
+      
+      // Calculate arm position from hand
+      const shoulderAngle = -45 - (handPosition.y - 0.5) * 90;
+      const elbowAngle = 45 + (handPosition.x - 0.5) * 60;
+      
+      // Shoulder
+      robotArmCtx.save();
+      robotArmCtx.translate(baseX, baseY - 20);
+      robotArmCtx.rotate(shoulderAngle * Math.PI / 180);
+      
+      // Upper arm
+      robotArmCtx.fillStyle = '#4a4a6a';
+      robotArmCtx.beginPath();
+      robotArmCtx.roundRect(-12, -80, 24, 80, 8);
+      robotArmCtx.fill();
+      robotArmCtx.stroke();
+      
+      // Elbow joint
+      robotArmCtx.translate(0, -80);
+      robotArmCtx.fillStyle = '#00d4ff';
+      robotArmCtx.beginPath();
+      robotArmCtx.arc(0, 0, 10, 0, Math.PI * 2);
+      robotArmCtx.fill();
+      
+      // Lower arm
+      robotArmCtx.rotate(elbowAngle * Math.PI / 180);
+      robotArmCtx.fillStyle = '#4a4a6a';
+      robotArmCtx.beginPath();
+      robotArmCtx.roundRect(-10, -60, 20, 60, 6);
+      robotArmCtx.fill();
+      robotArmCtx.stroke();
+      
+      // Gripper
+      robotArmCtx.translate(0, -60);
+      const gripperOpen = isPinching ? 5 : 20;
+      
+      robotArmCtx.fillStyle = isPinching ? '#ff2d95' : '#39ff14';
+      robotArmCtx.strokeStyle = isPinching ? '#ff2d95' : '#39ff14';
+      
+      // Left gripper
+      robotArmCtx.beginPath();
+      robotArmCtx.moveTo(-gripperOpen, 0);
+      robotArmCtx.lineTo(-gripperOpen - 5, -25);
+      robotArmCtx.lineTo(-gripperOpen + 5, -25);
+      robotArmCtx.closePath();
+      robotArmCtx.fill();
+      
+      // Right gripper
+      robotArmCtx.beginPath();
+      robotArmCtx.moveTo(gripperOpen, 0);
+      robotArmCtx.lineTo(gripperOpen + 5, -25);
+      robotArmCtx.lineTo(gripperOpen - 5, -25);
+      robotArmCtx.closePath();
+      robotArmCtx.fill();
+      
+      robotArmCtx.restore();
+      
+      // Target indicator
+      const targetX = 100 + (handPosition.x - 0.3) * 250;
+      const targetY = 50 + handPosition.y * 150;
+      
+      robotArmCtx.strokeStyle = 'rgba(255, 45, 149, 0.5)';
+      robotArmCtx.setLineDash([5, 5]);
+      robotArmCtx.beginPath();
+      robotArmCtx.arc(targetX, targetY, 15, 0, Math.PI * 2);
+      robotArmCtx.stroke();
+      robotArmCtx.setLineDash([]);
+    }
+    
+    // ========================================
+    // SERVO GAUGES
+    // ========================================
+    
+    function updateServoGauges() {
+      fingerExtensions.forEach((ext, i) => {
+        const angle = Math.round(ext * 180);
+        const percent = ext * 100;
+        $(`servo${i}`).style.height = percent + '%';
+        $(`servoVal${i}`).textContent = angle + '°';
+      });
+    }
+    
+    // ========================================
+    // PICK AND PLACE
+    // ========================================
+    
+    function initPickupObjects() {
+      objects = [
+        { id: 'obj1', x: 50, y: 30 },
+        { id: 'obj2', x: 150, y: 80 },
+        { id: 'obj3', x: 80, y: 130 }
+      ];
+    }
+    initPickupObjects();
+    
+    function updatePickAndPlace() {
+      if (currentMode !== 'pickup') return;
+      
+      const playground = $('playground');
+      const rect = playground.getBoundingClientRect();
+      
+      const handX = handPosition.x * rect.width;
+      const handY = handPosition.y * rect.height;
+      
+      objects.forEach(obj => {
+        const el = $(obj.id);
+        if (!el) return;
+        
+        if (grabbedObject === obj.id) {
+          obj.x = handX - 25;
+          obj.y = handY - 25;
+          el.style.left = obj.x + 'px';
+          el.style.top = obj.y + 'px';
+          
+          // Check drop zones
+          document.querySelectorAll('.drop-zone').forEach(zone => {
+            const zoneRect = zone.getBoundingClientRect();
+            const playRect = playground.getBoundingClientRect();
+            const zoneX = zoneRect.left - playRect.left;
+            const zoneY = zoneRect.top - playRect.top;
+            
+            if (handX > zoneX && handX < zoneX + 80 && handY > zoneY && handY < zoneY + 80) {
+              zone.classList.add('hover');
+              
+              if (!isPinching) {
+                // Dropped in zone!
+                grabbedObject = null;
+                el.classList.remove('grabbed');
+                zone.classList.remove('hover');
+                addScore(100);
+                showAchievement('🎯', 'Perfect Drop!');
+                log('Object dropped in zone! +100 points', 'success');
+                playSound('drop');
+                
+                // Spawn celebration particles
+                for (let i = 0; i < 5; i++) {
+                  setTimeout(() => {
+                    spawnParticle(
+                      zoneRect.left + Math.random() * 80,
+                      zoneRect.top + Math.random() * 80,
+                      ['⭐', '✨', '🎉', '💫'][Math.floor(Math.random() * 4)]
+                    );
+                  }, i * 100);
+                }
+              }
+            } else {
+              zone.classList.remove('hover');
+            }
+          });
+          
+          // Release if not pinching
+          if (!isPinching) {
+            grabbedObject = null;
+            el.classList.remove('grabbed');
+            playSound('drop');
+          }
+        } else {
+          // Check if can grab
+          const dist = Math.sqrt((handX - obj.x - 25) ** 2 + (handY - obj.y - 25) ** 2);
+          if (dist < 40 && isPinching && !grabbedObject) {
+            grabbedObject = obj.id;
+            el.classList.add('grabbed');
+            playSound('grab');
+            log(`Grabbed ${el.textContent}!`, 'info');
+          }
+        }
+      });
+    }
+    
+    // ========================================
+    // RECORDING / PLAYBACK
+    // ========================================
+    
+    function updateRecording() {
+      if (isRecording && handPosition) {
+        recordedPath.push({
+          x: handPosition.x,
+          y: handPosition.y,
+          fingers: [...fingerExtensions],
+          gesture: currentGesture,
+          fingerCount: fingerCount,
+          direction: handDirection,
+          time: Date.now()
+        });
+        
+        // Update waypoints display
+        if (recordedPath.length % 30 === 0) { // Every ~1 second at 30fps
+          const waypointsList = $('waypointsList');
+          const num = Math.floor(recordedPath.length / 30);
+          waypointsList.innerHTML += `
+            <div class="waypoint">
+              <span class="waypoint-num">${num}</span>
+              <span>X: ${(handPosition.x * 100).toFixed(0)}% Y: ${(handPosition.y * 100).toFixed(0)}%</span>
+              <span style="color:#888">${currentGesture || '—'} | ${fingerCount}👆 | ${handDirection}</span>
+            </div>
+          `;
+          playSound('record');
+        }
+      }
+    }
+    
+    function startRecording() {
+      isRecording = true;
+      recordedPath = [];
+      $('recordingPanel').classList.add('recording');
+      $('btnRecord').disabled = true;
+      $('btnStopRecord').disabled = false;
+      $('btnPlayback').disabled = true;
+      $('waypointsList').innerHTML = '';
+      log('Recording started! Move your hand to record path.', 'warn');
+      playSound('record');
+    }
+    
+    function stopRecording() {
+      isRecording = false;
+      $('recordingPanel').classList.remove('recording');
+      $('btnRecord').disabled = false;
+      $('btnStopRecord').disabled = true;
+      $('btnPlayback').disabled = recordedPath.length === 0;
+      log(`Recording stopped. ${recordedPath.length} frames captured.`, 'success');
+      addScore(50);
+    }
+    
+    function playbackRecording() {
+      if (recordedPath.length === 0) return;
+      
+      isPlaying = true;
+      playbackIndex = 0;
+      $('btnPlayback').disabled = true;
+      log('Playing back recorded path...', 'info');
+      
+      const playFrame = () => {
+        if (playbackIndex >= recordedPath.length) {
+          isPlaying = false;
+          $('btnPlayback').disabled = false;
+          log('Playback complete!', 'success');
+          showAchievement('🎬', 'Playback Done!');
+          return;
+        }
+        
+        const frame = recordedPath[playbackIndex];
+        // Update visuals with recorded data
+        fingerExtensions = frame.fingers;
+        handPosition = { x: frame.x, y: frame.y };
+        fingerCount = frame.fingerCount || 0;
+        handDirection = frame.direction || 'CENTER';
+        
+        updateServoGauges();
+        drawRobotHand();
+        updateFingerCountDisplay();
+        updateDirectionDisplay();
+        if (currentMode === 'arm') drawRobotArm();
+        
+        playbackIndex++;
+        requestAnimationFrame(playFrame);
+      };
+      
+      playFrame();
+    }
+    
+    function clearRecording() {
+      recordedPath = [];
+      $('waypointsList').innerHTML = '';
+      $('btnPlayback').disabled = true;
+      log('Recording cleared.', 'info');
+    }
+    
+    // ========================================
+    // GESTURE COMMAND FEEDBACK
+    // ========================================
+    
+    function updateGestureCommands(gesture) {
+      document.querySelectorAll('.gesture-cmd').forEach(cmd => {
+        cmd.classList.remove('active');
+        if (cmd.dataset.gesture === gesture) {
+          cmd.classList.add('active');
+        }
+      });
+    }
+    
+    // ========================================
+    // ROBOT FACE
+    // ========================================
+    
+    function updateRobotFace(gesture) {
+      const face = $('robotFace');
+      face.classList.remove('happy', 'excited', 'working');
+      
+      switch(gesture) {
+        case 'THUMBS':
+          face.classList.add('happy');
+          break;
+        case 'FIST':
+          face.classList.add('excited');
+          break;
+        case 'PINCH':
+          face.classList.add('working');
+          break;
+      }
+      
+      // Eye tracking based on hand position
+      document.querySelectorAll('.pupil').forEach(pupil => {
+        const offsetX = (handPosition.x - 0.5) * 8;
+        const offsetY = (handPosition.y - 0.5) * 8;
+        pupil.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
+      });
+    }
+    
+    // ========================================
+    // MODE SWITCHING
+    // ========================================
+    
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        currentMode = tab.dataset.mode;
+        
+        document.querySelectorAll('.mode-content').forEach(c => c.style.display = 'none');
+        $(`mode-${currentMode}`).style.display = 'block';
+        
+        setPill('modeStatus', `🎮 Mode: ${tab.querySelector('.label').textContent}`, 'ok');
+        log(`Switched to ${tab.querySelector('.label').textContent} mode`, 'info');
+        playSound('gesture');
+      });
+    });
+    
+    // ========================================
+    // MEDIAPIPE SETUP
+    // ========================================
+    
+    function initMediaPipe() {
+      hands = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      });
+      
+      hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.5
+      });
+      
+      hands.onResults(onResults);
+    }
+    
+    function onResults(results) {
+      // Clear and draw camera feed (mirrored)
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(-1, 1);
+      ctx.translate(-canvas.width, 0);
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
+      
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const landmarks = results.multiHandLandmarks[0];
+        
+        // Draw hand landmarks
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.translate(-canvas.width, 0);
+        
+        drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: '#00d4ff', lineWidth: 3 });
+        drawLandmarks(ctx, landmarks, { color: '#ff2d95', lineWidth: 2, radius: 5 });
+        
+        ctx.restore();
+        
+        // Update hand position (mirrored)
+        handPosition = {
+          x: 1 - landmarks[9].x, // Palm center, mirrored
+          y: landmarks[9].y
+        };
+        
+        // Recognize gesture (this also updates fingerCount and handDirection)
+        currentGesture = recognizeGesture(landmarks);
+        
+        // Update UI
+        setPill('handStatus', '✋ Hands: 1', 'ok');
+        
+        // Update finger count display
+        updateFingerCountDisplay();
+        
+        // Update direction display
+        updateDirectionDisplay();
+        
+        if (currentGesture) {
+          setPill('gestureStatus', `🧠 Gesture: ${currentGesture}`, 'ok');
+          updateGestureCommands(currentGesture);
+          updateRobotFace(currentGesture);
+          
+          // Gesture change events
+          if (currentGesture !== lastGesture) {
+            log(`Gesture: ${currentGesture} | Fingers: ${fingerCount} | Dir: ${handDirection}`, 'info');
+            playSound('gesture');
+            
+            // Special gesture reactions
+            if (currentGesture === 'THUMBS') {
+              addScore(25);
+              showAchievement('👍', 'THUMBS UP!');
+              playSound('thumbsup');
+              for (let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                  spawnParticle(
+                    Math.random() * window.innerWidth,
+                    Math.random() * window.innerHeight,
+                    ['⭐', '🌟', '✨', '💫', '🎉', '👍', '💚'][Math.floor(Math.random() * 7)]
+                  );
+                }, i * 50);
+              }
+            }
+            
+            if (currentGesture === 'OPEN' && fingerCount === 5) {
+              showAchievement('🖐️', 'HIGH FIVE!');
+            }
+            
+            lastGesture = currentGesture;
+          }
+        } else {
+          setPill('gestureStatus', '🧠 Gesture: —', 'warn');
+          updateGestureCommands(null);
+        }
+        
+        // Update visualizations
+        updateServoGauges();
+        drawRobotHand();
+        
+        if (currentMode === 'arm') drawRobotArm();
+        if (currentMode === 'pickup') updatePickAndPlace();
+        if (currentMode === 'record') updateRecording();
+        
+        // Draw finger count on canvas
+        ctx.save();
+        ctx.font = 'bold 60px Fredoka One';
+        ctx.fillStyle = 'rgba(255, 45, 149, 0.8)';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.textAlign = 'left';
+        ctx.strokeText(`${fingerCount}`, 30, 70);
+        ctx.fillText(`${fingerCount}`, 30, 70);
+        
+        // Draw direction arrow on canvas
+        const dirArrows = { LEFT: '←', RIGHT: '→', UP: '↑', DOWN: '↓', CENTER: '●' };
+        ctx.font = 'bold 40px Arial';
+        ctx.fillStyle = 'rgba(0, 212, 255, 0.8)';
+        ctx.strokeText(dirArrows[handDirection] || '●', 30, 120);
+        ctx.fillText(dirArrows[handDirection] || '●', 30, 120);
+        ctx.restore();
+        
+      } else {
+        setPill('handStatus', '✋ Hands: 0', 'warn');
+        setPill('gestureStatus', '🧠 Gesture: —', 'warn');
+        setPill('fingerStatus', '🖐️ Fingers: —', 'warn');
+        setPill('directionStatus', '🧭 Direction: —', 'warn');
+        updateGestureCommands(null);
+        lastGesture = null;
+        lastFingerCount = -1;
+        
+        // Reset direction arrows
+        ['dirLeft', 'dirRight', 'dirUp', 'dirDown'].forEach(id => {
+          $(id).classList.remove('active');
+        });
+      }
+    }
+    
+    // ========================================
+    // CAMERA CONTROLS
+    // ========================================
+    
+    async function startCamera() {
+      if (!hands) initMediaPipe();
+      
+      camera = new Camera(video, {
+        onFrame: async () => {
+          await hands.send({ image: video });
+        },
+        width: 640,
+        height: 480
+      });
+      
+      await camera.start();
+      running = true;
+      
+      $('btnStart').disabled = true;
+      $('btnStop').disabled = false;
+      setPill('camStatus', '📷 Camera: ON', 'ok');
+      log('Camera started! Show your hand!', 'success');
+      showAchievement('🚀', 'Let\'s Go!');
+    }
+    
+    function stopCamera() {
+      if (camera) {
+        camera.stop();
+        camera = null;
+      }
+      running = false;
+      
+      $('btnStart').disabled = false;
+      $('btnStop').disabled = true;
+      setPill('camStatus', '📷 Camera: OFF', 'warn');
+      log('Camera stopped.', 'info');
+    }
+    
+    // ========================================
+    // EVENT LISTENERS
+    // ========================================
+    
+    $('btnStart').addEventListener('click', startCamera);
+    $('btnStop').addEventListener('click', stopCamera);
+    $('btnClearLog').addEventListener('click', () => logEl.innerHTML = '');
+    $('btnHelp').addEventListener('click', () => $('instructionsOverlay').classList.add('show'));
+    
+    $('btnSound').addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      $('btnSound').textContent = soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+      log(`Sound ${soundEnabled ? 'enabled' : 'disabled'}`, 'info');
+    });
+    
+    $('btnRecord').addEventListener('click', startRecording);
+    $('btnStopRecord').addEventListener('click', stopRecording);
+    $('btnPlayback').addEventListener('click', playbackRecording);
+    $('btnClearRecord').addEventListener('click', clearRecording);
+    
+    // Close instructions on click outside
+    $('instructionsOverlay').addEventListener('click', (e) => {
+      if (e.target === $('instructionsOverlay')) closeInstructions();
+    });
+    
+    // Initialize
+    log('🤖 Magic Robot Hands V2 ready! Now with FINGER COUNTING and DIRECTIONS!', 'success');
+    setPill('camStatus', '📷 Camera: OFF', 'warn');
+    setPill('handStatus', '✋ Hands: 0', 'warn');
+    setPill('gestureStatus', '🧠 Gesture: —', 'warn');
+    setPill('fingerStatus', '🖐️ Fingers: —', 'warn');
+    setPill('directionStatus', '🧭 Direction: —', 'warn');
+    setPill('modeStatus', '🎮 Mode: Hand Control', 'ok');
+    
+    // Draw initial robot hand
+    drawRobotHand();
+    if (robotArmCtx) drawRobotArm();
+    
+    // Show instructions on first load
+    setTimeout(() => $('instructionsOverlay').classList.add('show'), 500);
+    
+  </script>
+</body>
+</html>

@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎮 Hand Gesture UI Controller - Robot Command Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --neon-pink: #ff2d95;
+      --neon-blue: #00d4ff;
+      --neon-green: #39ff14;
+      --neon-yellow: #fff700;
+      --neon-purple: #bf00ff;
+      --neon-orange: #ff6600;
+      --dark-bg: #0a0a1a;
+      --card-bg: rgba(15, 15, 30, 0.95);
+    }
+    
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--dark-bg);
+      min-height: 100vh;
+      color: #fff;
+      overflow: hidden;
+    }
+    
+    /* Main container - full screen */
+    .main-screen {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* Video background */
+    video { display: none; }
+    #cameraCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+    
+    /* UI Overlay */
+    #uiOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+    }
+    
+    /* Virtual Cursor */
+    #virtualCursor {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 3px solid var(--neon-blue);
+      background: rgba(0, 212, 255, 0.2);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 100;
+      transition: all 0.05s ease-out;
+      box-shadow: 0 0 20px var(--neon-blue), inset 0 0 15px rgba(0, 212, 255, 0.3);
+    }
+    #virtualCursor::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 8px;
+      height: 8px;
+      background: var(--neon-blue);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    #virtualCursor.clicking {
+      border-color: var(--neon-pink);
+      background: rgba(255, 45, 149, 0.4);
+      box-shadow: 0 0 40px var(--neon-pink), inset 0 0 20px rgba(255, 45, 149, 0.5);
+      transform: translate(-50%, -50%) scale(0.8);
+    }
+    #virtualCursor.hovering {
+      border-color: var(--neon-green);
+      box-shadow: 0 0 30px var(--neon-green);
+    }
+    
+    /* Cursor trail */
+    .cursor-trail {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--neon-blue);
+      opacity: 0.5;
+      pointer-events: none;
+      z-index: 99;
+      animation: trailFade 0.5s ease-out forwards;
+    }
+    @keyframes trailFade {
+      to { opacity: 0; transform: scale(0); }
+    }
+    
+    /* Depth indicator */
+    #depthIndicator {
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Orbitron', monospace;
+      font-size: 12px;
+      color: var(--neon-blue);
+      white-space: nowrap;
+    }
+    
+    /* Push indicator ring */
+    #pushRing {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 4px solid transparent;
+      border-top-color: var(--neon-green);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 101;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    #pushRing.active {
+      opacity: 1;
+      animation: pushSpin 0.5s linear infinite;
+    }
+    @keyframes pushSpin {
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    /* Control Panel */
+    .control-panel {
+      position: absolute;
+      background: var(--card-bg);
+      border: 2px solid rgba(0, 212, 255, 0.3);
+      border-radius: 20px;
+      backdrop-filter: blur(15px);
+      box-shadow: 0 0 40px rgba(0, 212, 255, 0.2);
+      pointer-events: auto;
+      overflow: hidden;
+    }
+    
+    /* Top button bar */
+    #topBar {
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 15px;
+      padding: 15px 25px;
+    }
+    
+    /* Gesture buttons with dwell-to-click */
+    .gesture-btn {
+      position: relative;
+      width: 100px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      overflow: hidden;
+    }
+    .gesture-btn .icon {
+      font-size: 2rem;
+      margin-bottom: 5px;
+    }
+    .gesture-btn .label {
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    .gesture-btn:hover, .gesture-btn.hovered {
+      border-color: var(--neon-blue);
+      background: rgba(0, 212, 255, 0.1);
+    }
+    .gesture-btn.active {
+      border-color: var(--neon-green);
+      background: rgba(57, 255, 20, 0.2);
+      box-shadow: 0 0 30px rgba(57, 255, 20, 0.5);
+    }
+    .gesture-btn.active .label {
+      color: var(--neon-green);
+    }
+    
+    /* Dwell progress ring */
+    .dwell-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .dwell-ring svg {
+      width: 100%;
+      height: 100%;
+    }
+    .dwell-ring circle {
+      fill: none;
+      stroke: var(--neon-green);
+      stroke-width: 4;
+      stroke-dasharray: 300;
+      stroke-dashoffset: 300;
+      transition: stroke-dashoffset 0.05s linear;
+    }
+    
+    /* Side panels */
+    #leftPanel {
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 200px;
+      padding: 20px;
+    }
+    
+    #rightPanel {
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 180px;
+      padding: 20px;
+    }
+    
+    /* Joystick zone */
+    .joystick-container {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      margin: 0 auto;
+    }
+    .joystick-base {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,212,255,0.1) 0%, rgba(0,0,0,0.3) 100%);
+      border: 3px solid rgba(0, 212, 255, 0.3);
+    }
+    .joystick-zones {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+    .joystick-zone {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      transition: all 0.2s;
+    }
+    .joystick-zone.up { top: 0; left: 50%; transform: translateX(-50%); }
+    .joystick-zone.down { bottom: 0; left: 50%; transform: translateX(-50%); }
+    .joystick-zone.left { left: 0; top: 50%; transform: translateY(-50%); }
+    .joystick-zone.right { right: 0; top: 50%; transform: translateY(-50%); }
+    .joystick-zone.active {
+      background: rgba(57, 255, 20, 0.3);
+      border-color: var(--neon-green);
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.5);
+    }
+    .joystick-handle {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      border: 3px solid #fff;
+      box-shadow: 0 0 20px var(--neon-blue);
+      transition: all 0.1s;
+    }
+    
+    /* Sliders */
+    .slider-container {
+      margin: 15px 0;
+    }
+    .slider-label {
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .slider-value {
+      color: var(--neon-green);
+      font-family: 'Orbitron', monospace;
+    }
+    .slider-track {
+      position: relative;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      overflow: hidden;
+    }
+    .slider-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+      border-radius: 18px;
+      transition: width 0.1s;
+    }
+    .slider-handle {
+      position: absolute;
+      top: 50%;
+      width: 30px;
+      height: 30px;
+      background: #fff;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 15px var(--neon-blue);
+      transition: left 0.1s;
+    }
+    .slider-zones {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+    }
+    .slider-zone {
+      flex: 1;
+      border-right: 1px solid rgba(255,255,255,0.1);
+      transition: background 0.2s;
+    }
+    .slider-zone:last-child { border: none; }
+    .slider-zone.active {
+      background: rgba(57, 255, 20, 0.2);
+    }
+    
+    /* Bottom panel - swipe area */
+    #bottomPanel {
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      padding: 20px;
+      text-align: center;
+    }
+    .swipe-area {
+      position: relative;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .swipe-area .hint {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .swipe-indicator {
+      position: absolute;
+      font-size: 3rem;
+      opacity: 0;
+      transition: all 0.3s;
+    }
+    .swipe-indicator.left { left: 20px; }
+    .swipe-indicator.right { right: 20px; }
+    .swipe-indicator.active {
+      opacity: 1;
+      animation: swipePulse 0.5s ease;
+    }
+    @keyframes swipePulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+    
+    /* Command output */
+    #commandOutput {
+      position: absolute;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card-bg);
+      border: 2px solid var(--neon-green);
+      border-radius: 15px;
+      padding: 15px 30px;
+      font-family: 'Orbitron', monospace;
+      font-size: 1.2rem;
+      color: var(--neon-green);
+      box-shadow: 0 0 30px rgba(57, 255, 20, 0.3);
+      z-index: 50;
+    }
+    #commandOutput .cmd-label {
+      font-size: 0.7rem;
+      color: #888;
+      margin-bottom: 5px;
+    }
+    #commandOutput .cmd-value {
+      font-size: 1.5rem;
+      text-transform: uppercase;
+    }
+    
+    /* Status bar */
+    #statusBar {
+      position: absolute;
+      top: 130px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 15px;
+      z-index: 50;
+    }
+    .status-pill {
+      padding: 8px 15px;
+      background: var(--card-bg);
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 25px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-pill.ok { border-color: var(--neon-green); }
+    .status-pill.warn { border-color: var(--neon-yellow); }
+    
+    /* Mode indicator */
+    #modeIndicator {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: var(--card-bg);
+      border: 2px solid var(--neon-purple);
+      border-radius: 15px;
+      padding: 15px 20px;
+      z-index: 50;
+    }
+    #modeIndicator .title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      color: var(--neon-purple);
+      margin-bottom: 10px;
+    }
+    .mode-options {
+      display: flex;
+      gap: 10px;
+    }
+    .mode-option {
+      padding: 8px 15px;
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .mode-option.active {
+      background: var(--neon-purple);
+      border-color: var(--neon-purple);
+      color: #fff;
+    }
+    
+    /* Start overlay */
+    #startOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      transition: opacity 0.5s;
+    }
+    #startOverlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #startOverlay h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 3rem;
+      background: linear-gradient(135deg, var(--neon-pink), var(--neon-blue), var(--neon-green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+    }
+    #startOverlay p {
+      color: #888;
+      margin-bottom: 30px;
+      max-width: 500px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .start-btn {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem;
+      padding: 20px 50px;
+      background: linear-gradient(135deg, var(--neon-green), #00aa00);
+      border: none;
+      border-radius: 50px;
+      color: #000;
+      cursor: pointer;
+      box-shadow: 0 0 40px rgba(57, 255, 20, 0.5);
+      transition: all 0.3s;
+    }
+    .start-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 60px rgba(57, 255, 20, 0.8);
+    }
+    
+    /* Help panel */
+    #helpPanel {
+      position: absolute;
+      top: 20px;
+      right: 220px;
+      background: var(--card-bg);
+      border: 2px solid var(--neon-blue);
+      border-radius: 15px;
+      padding: 15px;
+      font-size: 0.8rem;
+      z-index: 50;
+      max-width: 250px;
+    }
+    #helpPanel .title {
+      font-family: 'Fredoka One', cursive;
+      color: var(--neon-blue);
+      margin-bottom: 10px;
+    }
+    #helpPanel ul {
+      list-style: none;
+      line-height: 1.8;
+    }
+    #helpPanel li span {
+      color: var(--neon-green);
+    }
+    
+    /* Click effect */
+    .click-effect {
+      position: fixed;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px solid var(--neon-pink);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 200;
+      animation: clickExpand 0.5s ease-out forwards;
+    }
+    @keyframes clickExpand {
+      0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+    }
+    
+    /* Panel titles */
+    .panel-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem;
+      color: var(--neon-blue);
+      margin-bottom: 15px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Start Overlay -->
+  <div id="startOverlay">
+    <h1>🎮 Hand Gesture UI Controller</h1>
+    <p>Control robots with your hands! Use gestures to click buttons, move joysticks, adjust sliders, and swipe through menus. No mouse needed!</p>
+    <button class="start-btn" id="btnStart">▶️ Start Camera</button>
+  </div>
+  
+  <div class="main-screen">
+    <!-- Camera canvas (background) -->
+    <video id="video" playsinline></video>
+    <canvas id="cameraCanvas"></canvas>
+    
+    <!-- UI Overlay Canvas -->
+    <canvas id="uiOverlay"></canvas>
+    
+    <!-- Virtual Cursor -->
+    <div id="virtualCursor">
+      <div id="depthIndicator">Z: 0.00</div>
+    </div>
+    <div id="pushRing"></div>
+    
+    <!-- Mode Indicator -->
+    <div id="modeIndicator">
+      <div class="title">🎯 Click Mode</div>
+      <div class="mode-options">
+        <div class="mode-option active" data-mode="dwell">⏱️ Dwell</div>
+        <div class="mode-option" data-mode="pinch">🤏 Pinch</div>
+        <div class="mode-option" data-mode="push">👆 Push</div>
+      </div>
+    </div>
+    
+    <!-- Help Panel -->
+    <div id="helpPanel">
+      <div class="title">📖 How to Use</div>
+      <ul>
+        <li><span>☝️ Point</span> - Move cursor</li>
+        <li><span>⏱️ Dwell</span> - Hold to click</li>
+        <li><span>🤏 Pinch</span> - Pinch to click</li>
+        <li><span>👆 Push</span> - Push forward to click</li>
+        <li><span>👋 Swipe</span> - Fast hand motion</li>
+      </ul>
+    </div>
+    
+    <!-- Status Bar -->
+    <div id="statusBar">
+      <div class="status-pill" id="camStatus">📷 Camera: ON</div>
+      <div class="status-pill" id="handStatus">✋ Hand: —</div>
+      <div class="status-pill" id="clickStatus">🖱️ Click: —</div>
+      <div class="status-pill" id="fingerStatus">🖐️ Fingers: 0</div>
+    </div>
+    
+    <!-- Top Button Bar -->
+    <div class="control-panel" id="topBar">
+      <div class="gesture-btn" data-cmd="STOP">
+        <div class="dwell-ring"><svg viewBox="0 0 100 80"><circle cx="50" cy="40" r="35"/></svg></div>
+        <span class="icon">🛑</span>
+        <span class="label">STOP</span>
+      </div>
+      <div class="gesture-btn" data-cmd="FORWARD">
+        <div class="dwell-ring"><svg viewBox="0 0 100 80"><circle cx="50" cy="40" r="35"/></svg></div>
+        <span class="icon">⬆️</span>
+        <span class="label">FORWARD</span>
+      </div>
+      <div class="gesture-btn" data-cmd="BACKWARD">
+        <div class="dwell-ring"><svg viewBox="0 0 100 80"><circle cx="50" cy="40" r="35"/></svg></div>
+        <span class="icon">⬇️</span>
+        <span class="label">BACKWARD</span>
+      </div>
+      <div class="gesture-btn" data-cmd="GRAB">
+        <div class="dwell-ring"><svg viewBox="0 0 100 80"><circle cx="50" cy="40" r="35"/></svg></div>
+        <span class="icon">🤏</span>
+        <span class="label">GRAB</span>
+      </div>
+      <div class="gesture-btn" data-cmd="RELEASE">
+        <div class="dwell-ring"><svg viewBox="0 0 100 80"><circle cx="50" cy="40" r="35"/></svg></div>
+        <span class="icon">✋</span>
+        <span class="label">RELEASE</span>
+      </div>
+      <div class="gesture-btn" data-cmd="HOME">
+        <div class="dwell-ring"><svg viewBox="0 0 100 80"><circle cx="50" cy="40" r="35"/></svg></div>
+        <span class="icon">🏠</span>
+        <span class="label">HOME</span>
+      </div>
+    </div>
+    
+    <!-- Left Panel - Joystick -->
+    <div class="control-panel" id="leftPanel">
+      <div class="panel-title">🕹️ Direction Control</div>
+      <div class="joystick-container" id="joystick">
+        <div class="joystick-base"></div>
+        <div class="joystick-zones">
+          <div class="joystick-zone up" data-dir="UP">⬆️</div>
+          <div class="joystick-zone down" data-dir="DOWN">⬇️</div>
+          <div class="joystick-zone left" data-dir="LEFT">⬅️</div>
+          <div class="joystick-zone right" data-dir="RIGHT">➡️</div>
+        </div>
+        <div class="joystick-handle" id="joystickHandle"></div>
+      </div>
+    </div>
+    
+    <!-- Right Panel - Sliders -->
+    <div class="control-panel" id="rightPanel">
+      <div class="panel-title">⚡ Parameters</div>
+      
+      <div class="slider-container" id="speedSlider">
+        <div class="slider-label">
+          <span>🚀 Speed</span>
+          <span class="slider-value" id="speedValue">50%</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-zones">
+            <div class="slider-zone" data-val="0"></div>
+            <div class="slider-zone" data-val="25"></div>
+            <div class="slider-zone" data-val="50"></div>
+            <div class="slider-zone" data-val="75"></div>
+            <div class="slider-zone" data-val="100"></div>
+          </div>
+          <div class="slider-fill" style="width: 50%"></div>
+          <div class="slider-handle" style="left: 50%"></div>
+        </div>
+      </div>
+      
+      <div class="slider-container" id="gripSlider">
+        <div class="slider-label">
+          <span>🤏 Grip Force</span>
+          <span class="slider-value" id="gripValue">50%</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-zones">
+            <div class="slider-zone" data-val="0"></div>
+            <div class="slider-zone" data-val="25"></div>
+            <div class="slider-zone" data-val="50"></div>
+            <div class="slider-zone" data-val="75"></div>
+            <div class="slider-zone" data-val="100"></div>
+          </div>
+          <div class="slider-fill" style="width: 50%"></div>
+          <div class="slider-handle" style="left: 50%"></div>
+        </div>
+      </div>
+      
+      <div class="slider-container" id="armSlider">
+        <div class="slider-label">
+          <span>🦾 Arm Height</span>
+          <span class="slider-value" id="armValue">50%</span>
+        </div>
+        <div class="slider-track">
+          <div class="slider-zones">
+            <div class="slider-zone" data-val="0"></div>
+            <div class="slider-zone" data-val="25"></div>
+            <div class="slider-zone" data-val="50"></div>
+            <div class="slider-zone" data-val="75"></div>
+            <div class="slider-zone" data-val="100"></div>
+          </div>
+          <div class="slider-fill" style="width: 50%"></div>
+          <div class="slider-handle" style="left: 50%"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Bottom Panel - Swipe Area -->
+    <div class="control-panel" id="bottomPanel">
+      <div class="panel-title">👋 Swipe Gestures</div>
+      <div class="swipe-area" id="swipeArea">
+        <div class="swipe-indicator left" id="swipeLeft">👈</div>
+        <span class="hint">Swipe left/right to change modes</span>
+        <div class="swipe-indicator right" id="swipeRight">👉</div>
+      </div>
+    </div>
+    
+    <!-- Command Output -->
+    <div id="commandOutput">
+      <div class="cmd-label">🤖 Robot Command</div>
+      <div class="cmd-value" id="cmdValue">WAITING...</div>
+    </div>
+  </div>
+  
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  
+  <script>
+    // ========================================
+    // HAND GESTURE UI CONTROLLER
+    // ========================================
+    
+    const $ = id => document.getElementById(id);
+    const video = $('video');
+    const cameraCanvas = $('cameraCanvas');
+    const cameraCtx = cameraCanvas.getContext('2d');
+    const uiOverlay = $('uiOverlay');
+    const uiCtx = uiOverlay.getContext('2d');
+    
+    // Set canvas sizes
+    function resizeCanvases() {
+      cameraCanvas.width = window.innerWidth;
+      cameraCanvas.height = window.innerHeight;
+      uiOverlay.width = window.innerWidth;
+      uiOverlay.height = window.innerHeight;
+    }
+    resizeCanvases();
+    window.addEventListener('resize', resizeCanvases);
+    
+    // State
+    let hands = null;
+    let camera = null;
+    let clickMode = 'dwell'; // 'dwell', 'pinch', 'push'
+    
+    // Cursor state
+    let cursorX = window.innerWidth / 2;
+    let cursorY = window.innerHeight / 2;
+    let cursorZ = 0; // Depth
+    let prevCursorX = cursorX;
+    let prevCursorY = cursorY;
+    let smoothCursorX = cursorX;
+    let smoothCursorY = cursorY;
+    
+    // Click detection state
+    let isClicking = false;
+    let isPinching = false;
+    let dwellTarget = null;
+    let dwellProgress = 0;
+    let dwellThreshold = 1.5; // seconds
+    let lastDwellTime = 0;
+    
+    // Push detection
+    let pushBaseZ = 0;
+    let pushThreshold = 0.05;
+    let isPushing = false;
+    
+    // Swipe detection
+    let swipeHistory = [];
+    let lastSwipeTime = 0;
+    let swipeCooldown = 1000; // ms
+    
+    // Joystick state
+    let joystickActive = false;
+    let joystickDir = null;
+    
+    // Slider states
+    let sliderValues = {
+      speed: 50,
+      grip: 50,
+      arm: 50
+    };
+    let activeSlider = null;
+    
+    // Finger count
+    let fingerCount = 0;
+    
+    // Cursor trail
+    let trailPoints = [];
+    
+    // Audio
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        switch(type) {
+          case 'click':
+            osc.frequency.value = 800;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+            break;
+          case 'hover':
+            osc.frequency.value = 400;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+            break;
+          case 'swipe':
+            osc.frequency.value = 600;
+            osc.type = 'triangle';
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+            break;
+          case 'dwell':
+            osc.frequency.value = 300 + dwellProgress * 500;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+            break;
+        }
+      } catch(e) {}
+    }
+    
+    // ========================================
+    // FINGER DETECTION
+    // ========================================
+    
+    function distance(p1, p2) {
+      return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+    }
+    
+    function isFingerExtended(landmarks, tip, pip, mcp, wrist) {
+      const tipToWrist = distance(landmarks[tip], landmarks[wrist]);
+      const pipToWrist = distance(landmarks[pip], landmarks[wrist]);
+      return tipToWrist > pipToWrist * 1.1;
+    }
+    
+    function countFingers(landmarks) {
+      let count = 0;
+      
+      // Thumb
+      const thumbTip = landmarks[4];
+      const thumbMcp = landmarks[2];
+      const indexMcp = landmarks[5];
+      if (distance(thumbTip, indexMcp) > distance(thumbMcp, indexMcp) * 1.2) count++;
+      
+      // Other fingers
+      if (isFingerExtended(landmarks, 8, 6, 5, 0)) count++;
+      if (isFingerExtended(landmarks, 12, 10, 9, 0)) count++;
+      if (isFingerExtended(landmarks, 16, 14, 13, 0)) count++;
+      if (isFingerExtended(landmarks, 20, 18, 17, 0)) count++;
+      
+      return count;
+    }
+    
+    function detectPinch(landmarks) {
+      const thumbTip = landmarks[4];
+      const indexTip = landmarks[8];
+      return distance(thumbTip, indexTip) < 0.06;
+    }
+    
+    // ========================================
+    // CURSOR & CLICK HANDLING
+    // ========================================
+    
+    function updateCursor(landmarks) {
+      // Use index finger tip for cursor position
+      const indexTip = landmarks[8];
+      
+      // Convert to screen coordinates (mirrored)
+      const targetX = (1 - indexTip.x) * window.innerWidth;
+      const targetY = indexTip.y * window.innerHeight;
+      cursorZ = indexTip.z || 0;
+      
+      // Smooth cursor movement
+      const smoothing = 0.3;
+      smoothCursorX += (targetX - smoothCursorX) * smoothing;
+      smoothCursorY += (targetY - smoothCursorY) * smoothing;
+      
+      // Store for swipe detection
+      prevCursorX = cursorX;
+      prevCursorY = cursorY;
+      cursorX = smoothCursorX;
+      cursorY = smoothCursorY;
+      
+      // Update cursor element
+      const cursor = $('virtualCursor');
+      cursor.style.left = cursorX + 'px';
+      cursor.style.top = cursorY + 'px';
+      
+      // Update depth indicator
+      $('depthIndicator').textContent = `Z: ${cursorZ.toFixed(3)}`;
+      
+      // Update push ring
+      const pushRing = $('pushRing');
+      pushRing.style.left = cursorX + 'px';
+      pushRing.style.top = cursorY + 'px';
+      
+      // Add to trail
+      trailPoints.push({ x: cursorX, y: cursorY, time: Date.now() });
+      if (trailPoints.length > 10) trailPoints.shift();
+      
+      // Create trail effect
+      if (Math.random() < 0.3) {
+        const trail = document.createElement('div');
+        trail.className = 'cursor-trail';
+        trail.style.left = cursorX + 'px';
+        trail.style.top = cursorY + 'px';
+        document.body.appendChild(trail);
+        setTimeout(() => trail.remove(), 500);
+      }
+    }
+    
+    function checkHover() {
+      const cursor = $('virtualCursor');
+      let hoveredElement = null;
+      
+      // Check buttons
+      document.querySelectorAll('.gesture-btn').forEach(btn => {
+        const rect = btn.getBoundingClientRect();
+        if (cursorX >= rect.left && cursorX <= rect.right &&
+            cursorY >= rect.top && cursorY <= rect.bottom) {
+          btn.classList.add('hovered');
+          hoveredElement = btn;
+          cursor.classList.add('hovering');
+        } else {
+          btn.classList.remove('hovered');
+        }
+      });
+      
+      // Check joystick zones
+      document.querySelectorAll('.joystick-zone').forEach(zone => {
+        const rect = zone.getBoundingClientRect();
+        if (cursorX >= rect.left && cursorX <= rect.right &&
+            cursorY >= rect.top && cursorY <= rect.bottom) {
+          zone.classList.add('active');
+          joystickDir = zone.dataset.dir;
+          joystickActive = true;
+          hoveredElement = zone;
+          updateCommand('MOVE_' + joystickDir);
+        } else {
+          zone.classList.remove('active');
+        }
+      });
+      
+      if (!document.querySelector('.joystick-zone.active')) {
+        joystickActive = false;
+        joystickDir = null;
+      }
+      
+      // Update joystick handle
+      const handle = $('joystickHandle');
+      const joystick = $('joystick');
+      if (joystick) {
+        const jRect = joystick.getBoundingClientRect();
+        const jCenterX = jRect.left + jRect.width / 2;
+        const jCenterY = jRect.top + jRect.height / 2;
+        
+        if (cursorX >= jRect.left && cursorX <= jRect.right &&
+            cursorY >= jRect.top && cursorY <= jRect.bottom) {
+          const offsetX = ((cursorX - jCenterX) / (jRect.width / 2)) * 40;
+          const offsetY = ((cursorY - jCenterY) / (jRect.height / 2)) * 40;
+          handle.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
+        } else {
+          handle.style.transform = 'translate(-50%, -50%)';
+        }
+      }
+      
+      // Check sliders
+      ['speedSlider', 'gripSlider', 'armSlider'].forEach(sliderId => {
+        const slider = $(sliderId);
+        const track = slider.querySelector('.slider-track');
+        const rect = track.getBoundingClientRect();
+        
+        if (cursorX >= rect.left && cursorX <= rect.right &&
+            cursorY >= rect.top && cursorY <= rect.bottom) {
+          const percent = Math.max(0, Math.min(100, ((cursorX - rect.left) / rect.width) * 100));
+          activeSlider = sliderId;
+          
+          // Update slider if clicking
+          if (isClicking) {
+            const valueKey = sliderId.replace('Slider', '');
+            sliderValues[valueKey] = Math.round(percent);
+            updateSlider(sliderId, percent);
+          }
+          
+          // Highlight zone
+          const zones = slider.querySelectorAll('.slider-zone');
+          zones.forEach((zone, i) => {
+            const zonePercent = (i + 0.5) * 20;
+            if (Math.abs(percent - zonePercent) < 15) {
+              zone.classList.add('active');
+            } else {
+              zone.classList.remove('active');
+            }
+          });
+        } else {
+          slider.querySelectorAll('.slider-zone').forEach(z => z.classList.remove('active'));
+        }
+      });
+      
+      if (!hoveredElement) {
+        cursor.classList.remove('hovering');
+      }
+      
+      return hoveredElement;
+    }
+    
+    function updateSlider(sliderId, percent) {
+      const slider = $(sliderId);
+      slider.querySelector('.slider-fill').style.width = percent + '%';
+      slider.querySelector('.slider-handle').style.left = percent + '%';
+      
+      const valueKey = sliderId.replace('Slider', '');
+      $(`${valueKey}Value`).textContent = Math.round(percent) + '%';
+      
+      updateCommand(`SET_${valueKey.toUpperCase()}_${Math.round(percent)}`);
+    }
+    
+    // ========================================
+    // CLICK DETECTION (Multiple modes)
+    // ========================================
+    
+    function handleDwellClick(hoveredElement) {
+      if (!hoveredElement || !hoveredElement.classList.contains('gesture-btn')) {
+        dwellTarget = null;
+        dwellProgress = 0;
+        document.querySelectorAll('.dwell-ring circle').forEach(c => {
+          c.style.strokeDashoffset = 300;
+        });
+        return;
+      }
+      
+      if (dwellTarget !== hoveredElement) {
+        dwellTarget = hoveredElement;
+        dwellProgress = 0;
+        lastDwellTime = Date.now();
+        playSound('hover');
+      }
+      
+      const elapsed = (Date.now() - lastDwellTime) / 1000;
+      dwellProgress = Math.min(1, elapsed / dwellThreshold);
+      
+      // Update dwell ring
+      const ring = hoveredElement.querySelector('.dwell-ring circle');
+      if (ring) {
+        ring.style.strokeDashoffset = 300 - (dwellProgress * 300);
+      }
+      
+      // Play dwell sound
+      if (dwellProgress > 0 && dwellProgress < 1 && Math.random() < 0.1) {
+        playSound('dwell');
+      }
+      
+      // Trigger click
+      if (dwellProgress >= 1) {
+        triggerClick(hoveredElement);
+        dwellTarget = null;
+        dwellProgress = 0;
+      }
+    }
+    
+    function handlePinchClick(landmarks, hoveredElement) {
+      const wasPinching = isPinching;
+      isPinching = detectPinch(landmarks);
+      
+      const cursor = $('virtualCursor');
+      
+      if (isPinching) {
+        cursor.classList.add('clicking');
+        isClicking = true;
+        
+        if (!wasPinching && hoveredElement) {
+          triggerClick(hoveredElement);
+        }
+      } else {
+        cursor.classList.remove('clicking');
+        isClicking = false;
+      }
+    }
+    
+    function handlePushClick(landmarks, hoveredElement) {
+      const currentZ = landmarks[8].z || 0;
+      
+      // Initialize base Z
+      if (pushBaseZ === 0) {
+        pushBaseZ = currentZ;
+      }
+      
+      // Smooth base Z update
+      pushBaseZ = pushBaseZ * 0.99 + currentZ * 0.01;
+      
+      const pushAmount = pushBaseZ - currentZ; // Negative Z = closer to camera
+      const pushRing = $('pushRing');
+      const cursor = $('virtualCursor');
+      
+      if (pushAmount > pushThreshold) {
+        pushRing.classList.add('active');
+        
+        if (!isPushing) {
+          isPushing = true;
+          cursor.classList.add('clicking');
+          isClicking = true;
+          
+          if (hoveredElement) {
+            triggerClick(hoveredElement);
+          }
+        }
+      } else {
+        pushRing.classList.remove('active');
+        isPushing = false;
+        cursor.classList.remove('clicking');
+        isClicking = false;
+      }
+    }
+    
+    function triggerClick(element) {
+      playSound('click');
+      
+      // Visual feedback
+      const effect = document.createElement('div');
+      effect.className = 'click-effect';
+      effect.style.left = cursorX + 'px';
+      effect.style.top = cursorY + 'px';
+      document.body.appendChild(effect);
+      setTimeout(() => effect.remove(), 500);
+      
+      // Handle button click
+      if (element.classList.contains('gesture-btn')) {
+        const cmd = element.dataset.cmd;
+        
+        // Remove active from all buttons
+        document.querySelectorAll('.gesture-btn').forEach(b => b.classList.remove('active'));
+        element.classList.add('active');
+        
+        updateCommand(cmd);
+        
+        // Reset dwell ring
+        const ring = element.querySelector('.dwell-ring circle');
+        if (ring) ring.style.strokeDashoffset = 300;
+        
+        // Auto-reset after delay
+        setTimeout(() => element.classList.remove('active'), 500);
+      }
+      
+      // Handle joystick zone click
+      if (element.classList.contains('joystick-zone')) {
+        updateCommand('MOVE_' + element.dataset.dir);
+      }
+    }
+    
+    // ========================================
+    // SWIPE DETECTION
+    // ========================================
+    
+    function detectSwipe() {
+      if (Date.now() - lastSwipeTime < swipeCooldown) return;
+      if (trailPoints.length < 5) return;
+      
+      const first = trailPoints[0];
+      const last = trailPoints[trailPoints.length - 1];
+      const dx = last.x - first.x;
+      const dy = last.y - first.y;
+      const dt = last.time - first.time;
+      
+      const speed = Math.sqrt(dx * dx + dy * dy) / dt;
+      
+      if (speed > 1.5) { // Fast enough for swipe
+        if (Math.abs(dx) > Math.abs(dy) * 2) { // Horizontal swipe
+          if (dx > 100) {
+            // Swipe right
+            $('swipeRight').classList.add('active');
+            setTimeout(() => $('swipeRight').classList.remove('active'), 500);
+            updateCommand('SWIPE_RIGHT');
+            playSound('swipe');
+            lastSwipeTime = Date.now();
+          } else if (dx < -100) {
+            // Swipe left
+            $('swipeLeft').classList.add('active');
+            setTimeout(() => $('swipeLeft').classList.remove('active'), 500);
+            updateCommand('SWIPE_LEFT');
+            playSound('swipe');
+            lastSwipeTime = Date.now();
+          }
+        }
+      }
+    }
+    
+    // ========================================
+    // COMMAND OUTPUT
+    // ========================================
+    
+    function updateCommand(cmd) {
+      $('cmdValue').textContent = cmd;
+      $('cmdValue').style.transform = 'scale(1.1)';
+      setTimeout(() => $('cmdValue').style.transform = 'scale(1)', 200);
+      
+      // You could send this command to a robot here!
+      console.log('Robot Command:', cmd);
+    }
+    
+    // ========================================
+    // STATUS UPDATES
+    // ========================================
+    
+    function updateStatus(field, value, ok = true) {
+      const el = $(field);
+      el.textContent = value;
+      el.classList.remove('ok', 'warn');
+      el.classList.add(ok ? 'ok' : 'warn');
+    }
+    
+    // ========================================
+    // MEDIAPIPE
+    // ========================================
+    
+    function initMediaPipe() {
+      hands = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      });
+      
+      hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.5
+      });
+      
+      hands.onResults(onResults);
+    }
+    
+    function onResults(results) {
+      // Draw camera feed (mirrored)
+      cameraCtx.save();
+      cameraCtx.scale(-1, 1);
+      cameraCtx.translate(-cameraCanvas.width, 0);
+      cameraCtx.drawImage(results.image, 0, 0, cameraCanvas.width, cameraCanvas.height);
+      cameraCtx.restore();
+      
+      // Clear UI overlay
+      uiCtx.clearRect(0, 0, uiOverlay.width, uiOverlay.height);
+      
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const landmarks = results.multiHandLandmarks[0];
+        
+        // Draw hand skeleton on UI overlay
+        uiCtx.save();
+        uiCtx.scale(-1, 1);
+        uiCtx.translate(-uiOverlay.width, 0);
+        
+        // Scale landmarks to canvas size
+        const scaledLandmarks = landmarks.map(l => ({
+          x: l.x * uiOverlay.width,
+          y: l.y * uiOverlay.height,
+          z: l.z
+        }));
+        
+        // Draw connections
+        const connections = [
+          [0,1],[1,2],[2,3],[3,4],
+          [0,5],[5,6],[6,7],[7,8],
+          [5,9],[9,10],[10,11],[11,12],
+          [9,13],[13,14],[14,15],[15,16],
+          [13,17],[17,18],[18,19],[19,20],
+          [0,17]
+        ];
+        
+        uiCtx.strokeStyle = 'rgba(0, 212, 255, 0.6)';
+        uiCtx.lineWidth = 3;
+        connections.forEach(([i, j]) => {
+          uiCtx.beginPath();
+          uiCtx.moveTo(scaledLandmarks[i].x, scaledLandmarks[i].y);
+          uiCtx.lineTo(scaledLandmarks[j].x, scaledLandmarks[j].y);
+          uiCtx.stroke();
+        });
+        
+        // Draw landmarks
+        scaledLandmarks.forEach((l, i) => {
+          uiCtx.beginPath();
+          uiCtx.arc(l.x, l.y, i === 8 ? 10 : 5, 0, Math.PI * 2);
+          uiCtx.fillStyle = i === 8 ? '#ff2d95' : '#00d4ff';
+          uiCtx.fill();
+        });
+        
+        uiCtx.restore();
+        
+        // Update cursor position
+        updateCursor(landmarks);
+        
+        // Check hover state
+        const hoveredElement = checkHover();
+        
+        // Handle click based on mode
+        switch (clickMode) {
+          case 'dwell':
+            handleDwellClick(hoveredElement);
+            break;
+          case 'pinch':
+            handlePinchClick(landmarks, hoveredElement);
+            break;
+          case 'push':
+            handlePushClick(landmarks, hoveredElement);
+            break;
+        }
+        
+        // Detect swipes
+        detectSwipe();
+        
+        // Count fingers
+        fingerCount = countFingers(landmarks);
+        
+        // Update status
+        updateStatus('handStatus', '✋ Hand: DETECTED', true);
+        updateStatus('fingerStatus', `🖐️ Fingers: ${fingerCount}`, true);
+        updateStatus('clickStatus', `🖱️ Click: ${isClicking ? 'YES' : 'NO'}`, isClicking);
+        
+      } else {
+        // No hand detected
+        $('virtualCursor').classList.remove('clicking', 'hovering');
+        updateStatus('handStatus', '✋ Hand: —', false);
+        updateStatus('clickStatus', '🖱️ Click: —', false);
+        updateStatus('fingerStatus', '🖐️ Fingers: —', false);
+        
+        // Reset states
+        dwellTarget = null;
+        dwellProgress = 0;
+        document.querySelectorAll('.dwell-ring circle').forEach(c => {
+          c.style.strokeDashoffset = 300;
+        });
+        document.querySelectorAll('.gesture-btn').forEach(b => b.classList.remove('hovered'));
+        document.querySelectorAll('.joystick-zone').forEach(z => z.classList.remove('active'));
+        $('joystickHandle').style.transform = 'translate(-50%, -50%)';
+      }
+    }
+    
+    // ========================================
+    // CAMERA START
+    // ========================================
+    
+    async function startCamera() {
+      $('startOverlay').classList.add('hidden');
+      
+      if (!hands) initMediaPipe();
+      
+      camera = new Camera(video, {
+        onFrame: async () => {
+          await hands.send({ image: video });
+        },
+        width: 1280,
+        height: 720
+      });
+      
+      await camera.start();
+      updateStatus('camStatus', '📷 Camera: ON', true);
+    }
+    
+    // ========================================
+    // MODE SWITCHING
+    // ========================================
+    
+    document.querySelectorAll('.mode-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        document.querySelectorAll('.mode-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+        clickMode = opt.dataset.mode;
+        
+        // Reset states
+        dwellProgress = 0;
+        isPinching = false;
+        isPushing = false;
+        pushBaseZ = 0;
+        isClicking = false;
+        $('virtualCursor').classList.remove('clicking');
+        $('pushRing').classList.remove('active');
+      });
+    });
+    
+    // ========================================
+    // INIT
+    // ========================================
+    
+    $('btnStart').addEventListener('click', startCamera);
+    
+    // Also allow clicking buttons with mouse for testing
+    document.querySelectorAll('.gesture-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cmd = btn.dataset.cmd;
+        document.querySelectorAll('.gesture-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateCommand(cmd);
+        playSound('click');
+        setTimeout(() => btn.classList.remove('active'), 500);
+      });
+    });
+    
+    console.log('🎮 Hand Gesture UI Controller ready!');
+  </script>
+</body>
+</html>

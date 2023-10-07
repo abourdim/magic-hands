@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎉 SUPER MAGIC HAND POWERS! 🦸‍♂️✨</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka+One&family=Nunito:wght@900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --neon-pink: #ff2d95;
+      --neon-blue: #00d4ff;
+      --neon-green: #39ff14;
+      --neon-yellow: #fff700;
+      --neon-purple: #bf00ff;
+      --neon-orange: #ff6600;
+    }
+    
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #000;
+      min-height: 100vh;
+      overflow: hidden;
+      cursor: none;
+    }
+    
+    /* Main canvas container */
+    #gameContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+    
+    video { display: none; }
+    
+    #mainCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* LED Strips */
+    .led-strip {
+      position: fixed;
+      z-index: 100;
+      display: flex;
+      pointer-events: none;
+    }
+    .led-strip.top { top: 0; left: 0; right: 0; height: 15px; flex-direction: row; }
+    .led-strip.bottom { bottom: 0; left: 0; right: 0; height: 15px; flex-direction: row; }
+    .led-strip.left { top: 0; bottom: 0; left: 0; width: 15px; flex-direction: column; }
+    .led-strip.right { top: 0; bottom: 0; right: 0; width: 15px; flex-direction: column; }
+    
+    .led {
+      flex: 1;
+      background: #333;
+      border-radius: 3px;
+      margin: 2px;
+      transition: all 0.1s;
+      box-shadow: 0 0 10px currentColor;
+    }
+    
+    /* Power indicator */
+    #powerIndicator {
+      position: fixed;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      text-align: center;
+      pointer-events: none;
+    }
+    #powerName {
+      font-family: 'Bangers', cursive;
+      font-size: 4rem;
+      color: #fff;
+      text-shadow: 
+        0 0 10px var(--neon-pink),
+        0 0 20px var(--neon-pink),
+        0 0 40px var(--neon-pink),
+        0 0 80px var(--neon-pink);
+      letter-spacing: 5px;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    #powerName.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+    #powerEmoji {
+      font-size: 6rem;
+      display: block;
+      animation: bounce 0.5s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+    
+    /* Finger count display */
+    #fingerDisplay {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      text-align: center;
+      pointer-events: none;
+    }
+    #fingerCount {
+      font-family: 'Bangers', cursive;
+      font-size: 15rem;
+      line-height: 1;
+      color: transparent;
+      background: linear-gradient(135deg, #ff0080, #ff8c00, #40e0d0, #ff0080);
+      background-size: 400% 400%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: rainbowFlow 2s ease infinite;
+      text-shadow: 0 0 50px rgba(255, 0, 128, 0.5);
+    }
+    @keyframes rainbowFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    /* Silly Robot */
+    #robot {
+      position: fixed;
+      bottom: 50px;
+      right: 50px;
+      width: 150px;
+      height: 180px;
+      z-index: 150;
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+    #robot.scared {
+      transform: translateX(30px) rotate(15deg);
+    }
+    #robot.happy {
+      animation: robotDance 0.3s infinite;
+    }
+    #robot.love {
+      animation: robotLove 0.5s infinite;
+    }
+    @keyframes robotDance {
+      0%, 100% { transform: rotate(-10deg) translateY(0); }
+      50% { transform: rotate(10deg) translateY(-20px); }
+    }
+    @keyframes robotLove {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+    .robot-body {
+      width: 100px;
+      height: 120px;
+      background: linear-gradient(180deg, #4a4a6a, #2a2a4a);
+      border-radius: 20px;
+      margin: 0 auto;
+      position: relative;
+      border: 4px solid #00d4ff;
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+    }
+    .robot-eye {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background: #39ff14;
+      border-radius: 50%;
+      top: 25px;
+      box-shadow: 0 0 20px #39ff14;
+      transition: all 0.2s;
+    }
+    .robot-eye.left { left: 15px; }
+    .robot-eye.right { right: 15px; }
+    .robot-eye .pupil {
+      width: 12px;
+      height: 12px;
+      background: #000;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.1s;
+    }
+    #robot.scared .robot-eye {
+      background: #ff0000;
+      box-shadow: 0 0 30px #ff0000;
+      height: 40px;
+    }
+    #robot.love .robot-eye {
+      background: #ff69b4;
+      box-shadow: 0 0 30px #ff69b4;
+    }
+    .robot-mouth {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 20px;
+      border: 4px solid #00d4ff;
+      border-top: none;
+      border-radius: 0 0 25px 25px;
+      transition: all 0.2s;
+    }
+    #robot.scared .robot-mouth {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 4px solid #ff0000;
+    }
+    #robot.happy .robot-mouth {
+      height: 30px;
+      border-color: #39ff14;
+    }
+    .robot-antenna {
+      width: 8px;
+      height: 30px;
+      background: #00d4ff;
+      margin: 0 auto 5px;
+      border-radius: 4px;
+      position: relative;
+    }
+    .robot-antenna::after {
+      content: '';
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 20px;
+      background: #ff2d95;
+      border-radius: 50%;
+      box-shadow: 0 0 20px #ff2d95;
+      animation: antennaPulse 1s infinite;
+    }
+    @keyframes antennaPulse {
+      0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; }
+      50% { transform: translateX(-50%) scale(1.3); opacity: 0.7; }
+    }
+    .robot-speech {
+      position: absolute;
+      top: -60px;
+      left: -100px;
+      background: #fff;
+      color: #000;
+      padding: 10px 15px;
+      border-radius: 20px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+    .robot-speech::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      right: 30px;
+      border: 10px solid transparent;
+      border-top-color: #fff;
+    }
+    .robot-speech.show { opacity: 1; }
+    
+    /* Score */
+    #scoreDisplay {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      z-index: 200;
+      text-align: right;
+      pointer-events: none;
+    }
+    #scoreDisplay .label {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem;
+      color: #fff;
+    }
+    #scoreDisplay .value {
+      font-family: 'Bangers', cursive;
+      font-size: 4rem;
+      color: var(--neon-yellow);
+      text-shadow: 0 0 20px var(--neon-yellow);
+    }
+    
+    /* Combo display */
+    #comboDisplay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 300;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.3s;
+    }
+    #comboDisplay.show {
+      opacity: 1;
+      animation: comboZoom 0.5s ease;
+    }
+    @keyframes comboZoom {
+      0% { transform: translate(-50%, -50%) scale(0) rotate(-20deg); }
+      50% { transform: translate(-50%, -50%) scale(1.3) rotate(10deg); }
+      100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+    }
+    #comboText {
+      font-family: 'Bangers', cursive;
+      font-size: 8rem;
+      color: #fff;
+      text-shadow: 
+        0 0 20px #ff0,
+        0 0 40px #f80,
+        0 0 60px #f00,
+        5px 5px 0 #000;
+    }
+    
+    /* Disco ball */
+    #discoBall {
+      position: fixed;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fff, #888, #333);
+      box-shadow: 0 0 50px rgba(255,255,255,0.5);
+      z-index: 50;
+      transition: top 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      animation: discoSpin 3s linear infinite;
+    }
+    #discoBall.show {
+      top: 50px;
+    }
+    @keyframes discoSpin {
+      100% { transform: translateX(-50%) rotateY(360deg); }
+    }
+    .disco-tile {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background: linear-gradient(135deg, #fff 0%, #ccc 100%);
+      border-radius: 2px;
+    }
+    
+    /* Screen effects */
+    #screenFlash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 400;
+      transition: opacity 0.1s;
+    }
+    
+    /* Shake effect */
+    .shake {
+      animation: screenShake 0.5s ease;
+    }
+    @keyframes screenShake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+      20%, 40%, 60%, 80% { transform: translateX(10px); }
+    }
+    
+    /* Start screen */
+    #startScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a0033, #000033, #003333);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      transition: opacity 0.5s;
+    }
+    #startScreen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #startScreen h1 {
+      font-family: 'Bangers', cursive;
+      font-size: clamp(3rem, 10vw, 7rem);
+      color: #fff;
+      text-shadow: 
+        0 0 10px #ff0,
+        0 0 20px #f80,
+        0 0 40px #f00,
+        0 0 80px #f0f;
+      margin-bottom: 20px;
+      animation: titlePulse 2s infinite;
+    }
+    @keyframes titlePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    #startScreen .subtitle {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem;
+      color: #aaa;
+      margin-bottom: 40px;
+    }
+    #startScreen .powers-preview {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 800px;
+      margin-bottom: 40px;
+    }
+    .power-card {
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      width: 120px;
+      transition: all 0.3s;
+    }
+    .power-card:hover {
+      transform: scale(1.1) rotate(5deg);
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 30px var(--neon-pink);
+    }
+    .power-card .emoji { font-size: 3rem; }
+    .power-card .name { 
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.8rem;
+      color: #fff;
+      margin-top: 10px;
+    }
+    .start-btn {
+      font-family: 'Bangers', cursive;
+      font-size: 3rem;
+      padding: 20px 60px;
+      background: linear-gradient(135deg, var(--neon-green), #00aa00);
+      border: none;
+      border-radius: 50px;
+      color: #000;
+      cursor: pointer;
+      box-shadow: 0 0 50px var(--neon-green);
+      transition: all 0.3s;
+      animation: startPulse 1.5s infinite;
+    }
+    @keyframes startPulse {
+      0%, 100% { box-shadow: 0 0 30px var(--neon-green); }
+      50% { box-shadow: 0 0 60px var(--neon-green), 0 0 100px var(--neon-green); }
+    }
+    .start-btn:hover {
+      transform: scale(1.1);
+    }
+    
+    /* Direction arrows on screen */
+    .direction-indicator {
+      position: fixed;
+      font-size: 5rem;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 100;
+      pointer-events: none;
+      filter: drop-shadow(0 0 20px currentColor);
+    }
+    .direction-indicator.show { opacity: 1; }
+    #dirUp { top: 100px; left: 50%; transform: translateX(-50%); color: var(--neon-green); }
+    #dirDown { bottom: 200px; left: 50%; transform: translateX(-50%); color: var(--neon-yellow); }
+    #dirLeft { left: 100px; top: 50%; transform: translateY(-50%); color: var(--neon-blue); }
+    #dirRight { right: 100px; top: 50%; transform: translateY(-50%); color: var(--neon-pink); }
+    
+    /* Balloons to pop */
+    .balloon {
+      position: fixed;
+      font-size: 4rem;
+      z-index: 80;
+      cursor: pointer;
+      transition: transform 0.2s;
+      animation: balloonFloat 3s ease-in-out infinite;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+    }
+    .balloon:hover {
+      transform: scale(1.2);
+    }
+    @keyframes balloonFloat {
+      0%, 100% { transform: translateY(0) rotate(-5deg); }
+      50% { transform: translateY(-20px) rotate(5deg); }
+    }
+    .balloon.pop {
+      animation: balloonPop 0.3s ease forwards;
+    }
+    @keyframes balloonPop {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.5); }
+      100% { transform: scale(0); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Start Screen -->
+  <div id="startScreen">
+    <h1>🦸 SUPER HAND POWERS! 🦸‍♀️</h1>
+    <div class="subtitle">Use your REAL hands to control MAGIC powers!</div>
+    
+    <div class="powers-preview">
+      <div class="power-card">
+        <div class="emoji">✊</div>
+        <div class="name">HULK SMASH!</div>
+      </div>
+      <div class="power-card">
+        <div class="emoji">✋</div>
+        <div class="name">FORCE PUSH!</div>
+      </div>
+      <div class="power-card">
+        <div class="emoji">☝️</div>
+        <div class="name">LASER BEAM!</div>
+      </div>
+      <div class="power-card">
+        <div class="emoji">✌️</div>
+        <div class="name">RAINBOW!</div>
+      </div>
+      <div class="power-card">
+        <div class="emoji">🤏</div>
+        <div class="name">GRAVITY!</div>
+      </div>
+      <div class="power-card">
+        <div class="emoji">👍</div>
+        <div class="name">DISCO PARTY!</div>
+      </div>
+    </div>
+    
+    <button class="start-btn" id="btnStart">🚀 START THE MAGIC! 🚀</button>
+  </div>
+  
+  <!-- Main Game -->
+  <div id="gameContainer">
+    <video id="video" playsinline></video>
+    <canvas id="mainCanvas"></canvas>
+    
+    <!-- LED Strips -->
+    <div class="led-strip top" id="ledTop"></div>
+    <div class="led-strip bottom" id="ledBottom"></div>
+    <div class="led-strip left" id="ledLeft"></div>
+    <div class="led-strip right" id="ledRight"></div>
+    
+    <!-- Direction indicators -->
+    <div class="direction-indicator" id="dirUp">⬆️</div>
+    <div class="direction-indicator" id="dirDown">⬇️</div>
+    <div class="direction-indicator" id="dirLeft">⬅️</div>
+    <div class="direction-indicator" id="dirRight">➡️</div>
+    
+    <!-- Power indicator -->
+    <div id="powerIndicator">
+      <span id="powerEmoji">⚡</span>
+      <div id="powerName">SUPER POWER!</div>
+    </div>
+    
+    <!-- Finger count -->
+    <div id="fingerDisplay">
+      <div id="fingerCount">0</div>
+    </div>
+    
+    <!-- Score -->
+    <div id="scoreDisplay">
+      <div class="label">⭐ SCORE</div>
+      <div class="value" id="scoreValue">0</div>
+    </div>
+    
+    <!-- Combo -->
+    <div id="comboDisplay">
+      <div id="comboText">AMAZING!</div>
+    </div>
+    
+    <!-- Disco ball -->
+    <div id="discoBall"></div>
+    
+    <!-- Robot friend -->
+    <div id="robot">
+      <div class="robot-speech" id="robotSpeech">Hello friend!</div>
+      <div class="robot-antenna"></div>
+      <div class="robot-body">
+        <div class="robot-eye left"><div class="pupil" id="pupilL"></div></div>
+        <div class="robot-eye right"><div class="pupil" id="pupilR"></div></div>
+        <div class="robot-mouth"></div>
+      </div>
+    </div>
+    
+    <!-- Screen flash -->
+    <div id="screenFlash"></div>
+  </div>
+  
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  
+  <script>
+    // ========================================
+    // 🦸 SUPER HAND POWERS - MEGA FUN DEMO! 🦸
+    // ========================================
+    
+    const $ = id => document.getElementById(id);
+    const canvas = $('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const video = $('video');
+    
+    // Resize canvas
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    
+    // State
+    let hands = null;
+    let camera = null;
+    let score = 0;
+    let fingerCount = 0;
+    let lastFingerCount = -1;
+    let currentPower = null;
+    let lastPower = null;
+    let handX = 0.5, handY = 0.5;
+    let handDirection = 'CENTER';
+    let isPinching = false;
+    let discoMode = false;
+    let lastGestureTime = 0;
+    
+    // Particles
+    let particles = [];
+    let lasers = [];
+    let explosions = [];
+    let confetti = [];
+    let rainbowTrail = [];
+    let gravityObjects = [];
+    let balloons = [];
+    
+    // Audio context
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // ========================================
+    // LED STRIPS
+    // ========================================
+    
+    function createLEDs() {
+      const strips = ['ledTop', 'ledBottom', 'ledLeft', 'ledRight'];
+      strips.forEach(id => {
+        const strip = $(id);
+        const count = id.includes('Top') || id.includes('Bottom') ? 60 : 40;
+        for (let i = 0; i < count; i++) {
+          const led = document.createElement('div');
+          led.className = 'led';
+          strip.appendChild(led);
+        }
+      });
+    }
+    createLEDs();
+    
+    function updateLEDs(color, pattern = 'solid') {
+      const allLeds = document.querySelectorAll('.led');
+      const time = Date.now() / 100;
+      
+      allLeds.forEach((led, i) => {
+        let hue, saturation = '100%', lightness = '50%';
+        
+        switch(pattern) {
+          case 'rainbow':
+            hue = (i * 10 + time * 5) % 360;
+            break;
+          case 'chase':
+            const chasePos = (time * 2) % allLeds.length;
+            const dist = Math.abs(i - chasePos);
+            lightness = dist < 5 ? '60%' : '10%';
+            hue = color;
+            break;
+          case 'pulse':
+            lightness = (30 + Math.sin(time + i * 0.1) * 30) + '%';
+            hue = color;
+            break;
+          case 'disco':
+            hue = Math.random() * 360;
+            lightness = Math.random() > 0.7 ? '60%' : '10%';
+            break;
+          default:
+            hue = color;
+        }
+        
+        led.style.background = `hsl(${hue}, ${saturation}, ${lightness})`;
+        led.style.boxShadow = `0 0 15px hsl(${hue}, ${saturation}, ${lightness})`;
+      });
+    }
+    
+    // ========================================
+    // SOUND EFFECTS
+    // ========================================
+    
+    function playSound(type) {
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        switch(type) {
+          case 'laser':
+            osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+            osc.type = 'sawtooth';
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+            break;
+            
+          case 'explosion':
+            const noise = audioCtx.createBufferSource();
+            const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.5, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < buffer.length; i++) {
+              data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.1));
+            }
+            noise.buffer = buffer;
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            noise.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            noise.start();
+            break;
+            
+          case 'powerup':
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.2);
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+            break;
+            
+          case 'disco':
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.type = 'square';
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            for (let i = 0; i < 4; i++) {
+              osc.frequency.setValueAtTime([440, 550, 660, 550][i], audioCtx.currentTime + i * 0.15);
+            }
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.6);
+            break;
+            
+          case 'pop':
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+            break;
+            
+          case 'rainbow':
+            const notes = [523, 587, 659, 698, 784];
+            notes.forEach((freq, i) => {
+              setTimeout(() => {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.connect(g);
+                g.connect(audioCtx.destination);
+                o.frequency.value = freq;
+                o.type = 'sine';
+                g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                o.start();
+                o.stop(audioCtx.currentTime + 0.2);
+              }, i * 80);
+            });
+            break;
+            
+          case 'gravity':
+            osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.5);
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+            break;
+        }
+      } catch(e) {}
+    }
+    
+    // ========================================
+    // ROBOT FRIEND
+    // ========================================
+    
+    const robotPhrases = {
+      happy: ["WOOHOO! 🎉", "SO FUN! 😄", "AMAZING! ✨", "YOU'RE AWESOME!", "YAYYY! 🌟"],
+      scared: ["AAAH! 😱", "SCARY! 💀", "OH NO! 😰", "HELP ME! 🆘", "TOO STRONG!"],
+      love: ["I LOVE YOU! 💕", "SO CUTE! 🥰", "BEST FRIENDS! 💖", "HUGS! 🤗", "❤️❤️❤️"],
+      amazed: ["WOW! 🤩", "INCREDIBLE!", "MAGIC! ✨", "SO COOL! 😎", "LEGENDARY!"],
+      disco: ["DANCE! 💃", "PARTY TIME!", "GROOVY! 🕺", "LET'S GO!", "BOOM BOOM!"]
+    };
+    
+    function setRobotMood(mood) {
+      const robot = $('robot');
+      robot.classList.remove('scared', 'happy', 'love');
+      if (mood) robot.classList.add(mood);
+      
+      // Random phrase
+      const phrases = robotPhrases[mood] || robotPhrases.amazed;
+      const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+      
+      const speech = $('robotSpeech');
+      speech.textContent = phrase;
+      speech.classList.add('show');
+      setTimeout(() => speech.classList.remove('show'), 2000);
+    }
+    
+    function updateRobotEyes(x, y) {
+      const offsetX = (x - 0.5) * 10;
+      const offsetY = (y - 0.5) * 10;
+      $('pupilL').style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
+      $('pupilR').style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
+    }
+    
+    // ========================================
+    // PARTICLE SYSTEMS
+    // ========================================
+    
+    function spawnExplosion(x, y, color, count = 50) {
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+        const speed = 5 + Math.random() * 15;
+        explosions.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1,
+          color,
+          size: 5 + Math.random() * 10
+        });
+      }
+    }
+    
+    function spawnConfetti(x, y, count = 100) {
+      const colors = ['#ff0', '#f0f', '#0ff', '#f00', '#0f0', '#00f', '#ff8800'];
+      for (let i = 0; i < count; i++) {
+        confetti.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 20,
+          vy: -Math.random() * 20 - 5,
+          rotation: Math.random() * 360,
+          rotSpeed: (Math.random() - 0.5) * 20,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: 5 + Math.random() * 10,
+          life: 1
+        });
+      }
+    }
+    
+    function spawnRainbowTrail(x, y) {
+      rainbowTrail.push({
+        x, y,
+        hue: (Date.now() / 10) % 360,
+        size: 30,
+        life: 1
+      });
+      if (rainbowTrail.length > 50) rainbowTrail.shift();
+    }
+    
+    function spawnLaser(x, y, angle) {
+      lasers.push({
+        x, y,
+        angle,
+        length: 0,
+        maxLength: canvas.width,
+        speed: 50,
+        life: 1
+      });
+    }
+    
+    function spawnGravityObject() {
+      const emojis = ['🌟', '⭐', '💎', '🔮', '🎈', '🍕', '🍩', '🎮', '🚀', '👽'];
+      gravityObjects.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: 0,
+        vy: 0,
+        emoji: emojis[Math.floor(Math.random() * emojis.length)],
+        size: 30 + Math.random() * 30
+      });
+    }
+    
+    // Initialize gravity objects
+    for (let i = 0; i < 15; i++) spawnGravityObject();
+    
+    // ========================================
+    // BALLOONS
+    // ========================================
+    
+    function spawnBalloon() {
+      const colors = ['🎈', '🔴', '🟡', '🟢', '🔵', '🟣', '⚪'];
+      const balloon = document.createElement('div');
+      balloon.className = 'balloon';
+      balloon.textContent = colors[Math.floor(Math.random() * colors.length)];
+      balloon.style.left = (Math.random() * (window.innerWidth - 100) + 50) + 'px';
+      balloon.style.top = (Math.random() * (window.innerHeight - 300) + 100) + 'px';
+      balloon.style.animationDelay = (Math.random() * 2) + 's';
+      document.body.appendChild(balloon);
+      balloons.push(balloon);
+    }
+    
+    // Spawn initial balloons
+    for (let i = 0; i < 8; i++) spawnBalloon();
+    
+    function checkBalloonPop(x, y) {
+      balloons.forEach((balloon, i) => {
+        const rect = balloon.getBoundingClientRect();
+        const bx = rect.left + rect.width / 2;
+        const by = rect.top + rect.height / 2;
+        const dist = Math.sqrt((x - bx) ** 2 + (y - by) ** 2);
+        
+        if (dist < 60 && !balloon.classList.contains('pop')) {
+          balloon.classList.add('pop');
+          playSound('pop');
+          addScore(50);
+          showCombo('POP! 🎈');
+          spawnExplosion(bx, by, '#ff69b4', 20);
+          
+          setTimeout(() => {
+            balloon.remove();
+            balloons.splice(i, 1);
+            spawnBalloon();
+          }, 300);
+        }
+      });
+    }
+    
+    // ========================================
+    // SCREEN EFFECTS
+    // ========================================
+    
+    function flashScreen(color = '#fff') {
+      const flash = $('screenFlash');
+      flash.style.background = color;
+      flash.style.opacity = '0.8';
+      setTimeout(() => flash.style.opacity = '0', 100);
+    }
+    
+    function shakeScreen() {
+      document.body.classList.add('shake');
+      setTimeout(() => document.body.classList.remove('shake'), 500);
+    }
+    
+    function showPower(emoji, name, color) {
+      $('powerEmoji').textContent = emoji;
+      $('powerName').textContent = name;
+      $('powerName').style.textShadow = `0 0 10px ${color}, 0 0 20px ${color}, 0 0 40px ${color}`;
+      $('powerName').classList.add('show');
+      setTimeout(() => $('powerName').classList.remove('show'), 1500);
+    }
+    
+    function showCombo(text) {
+      $('comboText').textContent = text;
+      $('comboDisplay').classList.add('show');
+      setTimeout(() => $('comboDisplay').classList.remove('show'), 1000);
+    }
+    
+    function addScore(points) {
+      score += points;
+      $('scoreValue').textContent = score;
+      $('scoreValue').style.transform = 'scale(1.3)';
+      setTimeout(() => $('scoreValue').style.transform = 'scale(1)', 200);
+    }
+    
+    function toggleDisco(on) {
+      discoMode = on;
+      $('discoBall').classList.toggle('show', on);
+      if (on) {
+        playSound('disco');
+        setRobotMood('disco');
+      }
+    }
+    
+    // ========================================
+    // HAND DETECTION
+    // ========================================
+    
+    function distance(p1, p2) {
+      return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+    }
+    
+    function isFingerExtended(landmarks, tip, pip, mcp, wrist) {
+      return distance(landmarks[tip], landmarks[wrist]) > distance(landmarks[pip], landmarks[wrist]) * 1.1;
+    }
+    
+    function countFingers(lm) {
+      let count = 0;
+      if (distance(lm[4], lm[5]) > distance(lm[2], lm[5]) * 1.2) count++;
+      if (isFingerExtended(lm, 8, 6, 5, 0)) count++;
+      if (isFingerExtended(lm, 12, 10, 9, 0)) count++;
+      if (isFingerExtended(lm, 16, 14, 13, 0)) count++;
+      if (isFingerExtended(lm, 20, 18, 17, 0)) count++;
+      return count;
+    }
+    
+    function detectPinch(lm) {
+      return distance(lm[4], lm[8]) < 0.06;
+    }
+    
+    function isThumbsUp(lm) {
+      const thumbUp = lm[4].y < lm[3].y && lm[3].y < lm[2].y;
+      const thumbExt = distance(lm[4], lm[0]) > distance(lm[2], lm[0]) * 1.3;
+      const othersCurled = !isFingerExtended(lm, 8, 6, 5, 0) && 
+                          !isFingerExtended(lm, 12, 10, 9, 0) &&
+                          !isFingerExtended(lm, 16, 14, 13, 0) &&
+                          !isFingerExtended(lm, 20, 18, 17, 0);
+      return thumbUp && thumbExt && othersCurled && distance(lm[4], lm[8]) > 0.1;
+    }
+    
+    function detectPower(lm) {
+      const fingers = countFingers(lm);
+      fingerCount = fingers;
+      
+      isPinching = detectPinch(lm);
+      
+      // Thumbs up = DISCO PARTY!
+      if (isThumbsUp(lm)) return 'DISCO';
+      
+      // Pinch = GRAVITY
+      if (isPinching) return 'GRAVITY';
+      
+      // Fist = HULK SMASH
+      if (fingers === 0) return 'SMASH';
+      
+      // Point = LASER
+      if (fingers === 1 && isFingerExtended(lm, 8, 6, 5, 0)) return 'LASER';
+      
+      // Peace = RAINBOW
+      if (fingers === 2 && isFingerExtended(lm, 8, 6, 5, 0) && isFingerExtended(lm, 12, 10, 9, 0)) return 'RAINBOW';
+      
+      // Open hand = FORCE PUSH
+      if (fingers >= 4) return 'FORCE';
+      
+      return null;
+    }
+    
+    function detectDirection(lm) {
+      const wrist = lm[0];
+      const middle = lm[12];
+      const dx = middle.x - wrist.x;
+      const dy = middle.y - wrist.y;
+      
+      if (Math.abs(dx) > Math.abs(dy) * 1.5) {
+        return dx > 0 ? 'RIGHT' : 'LEFT';
+      } else if (Math.abs(dy) > Math.abs(dx) * 1.5) {
+        return dy > 0 ? 'DOWN' : 'UP';
+      }
+      return 'CENTER';
+    }
+    
+    // ========================================
+    // POWER EFFECTS
+    // ========================================
+    
+    function activatePower(power, x, y) {
+      const now = Date.now();
+      if (now - lastGestureTime < 500 && power === lastPower) return;
+      
+      switch(power) {
+        case 'SMASH':
+          showPower('💥', 'HULK SMASH!', '#00ff00');
+          playSound('explosion');
+          flashScreen('#00ff00');
+          shakeScreen();
+          spawnExplosion(x, y, '#00ff00', 80);
+          setRobotMood('scared');
+          addScore(100);
+          break;
+          
+        case 'FORCE':
+          showPower('🌀', 'FORCE PUSH!', '#00d4ff');
+          playSound('powerup');
+          // Push all gravity objects away
+          gravityObjects.forEach(obj => {
+            const dx = obj.x - x;
+            const dy = obj.y - y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            obj.vx += (dx / dist) * 30;
+            obj.vy += (dy / dist) * 30;
+          });
+          spawnExplosion(x, y, '#00d4ff', 30);
+          setRobotMood('amazed');
+          addScore(50);
+          break;
+          
+        case 'LASER':
+          showPower('⚡', 'LASER BEAM!', '#ff0000');
+          playSound('laser');
+          const angle = Math.atan2(y - canvas.height/2, x - canvas.width/2);
+          spawnLaser(x, y, angle);
+          checkBalloonPop(x, y);
+          addScore(25);
+          break;
+          
+        case 'RAINBOW':
+          showPower('🌈', 'RAINBOW POWER!', '#ff69b4');
+          if (now - lastGestureTime > 100) {
+            playSound('rainbow');
+            setRobotMood('love');
+          }
+          spawnRainbowTrail(x, y);
+          addScore(10);
+          break;
+          
+        case 'GRAVITY':
+          showPower('🕳️', 'GRAVITY CONTROL!', '#9400d3');
+          if (now - lastGestureTime > 500) {
+            playSound('gravity');
+            setRobotMood('amazed');
+          }
+          // Pull objects toward pinch point
+          gravityObjects.forEach(obj => {
+            const dx = x - obj.x;
+            const dy = y - obj.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 10) {
+              obj.vx += (dx / dist) * 5;
+              obj.vy += (dy / dist) * 5;
+            }
+          });
+          addScore(15);
+          break;
+          
+        case 'DISCO':
+          if (!discoMode) {
+            showPower('🪩', 'DISCO PARTY!', '#ffff00');
+            toggleDisco(true);
+            spawnConfetti(canvas.width/2, 100, 150);
+            addScore(200);
+            showCombo('PARTY TIME! 🎉');
+            
+            // Auto-off after 5 seconds
+            setTimeout(() => toggleDisco(false), 5000);
+          }
+          break;
+      }
+      
+      lastPower = power;
+      lastGestureTime = now;
+    }
+    
+    // ========================================
+    // MAIN RENDER LOOP
+    // ========================================
+    
+    function render() {
+      // Clear
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Update LEDs
+      if (discoMode) {
+        updateLEDs(0, 'disco');
+      } else if (currentPower) {
+        const colors = { SMASH: 120, FORCE: 190, LASER: 0, RAINBOW: 300, GRAVITY: 280, DISCO: 60 };
+        updateLEDs(colors[currentPower] || 200, 'pulse');
+      } else {
+        updateLEDs(200, 'chase');
+      }
+      
+      // Draw rainbow trail
+      rainbowTrail.forEach((p, i) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue}, 100%, 60%, ${p.life * 0.5})`;
+        ctx.fill();
+        p.life -= 0.02;
+        p.size *= 0.98;
+      });
+      rainbowTrail = rainbowTrail.filter(p => p.life > 0);
+      
+      // Draw gravity objects
+      ctx.font = '40px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      gravityObjects.forEach(obj => {
+        obj.x += obj.vx;
+        obj.y += obj.vy;
+        obj.vx *= 0.95;
+        obj.vy *= 0.95;
+        
+        // Bounce off walls
+        if (obj.x < 0 || obj.x > canvas.width) obj.vx *= -0.8;
+        if (obj.y < 0 || obj.y > canvas.height) obj.vy *= -0.8;
+        obj.x = Math.max(0, Math.min(canvas.width, obj.x));
+        obj.y = Math.max(0, Math.min(canvas.height, obj.y));
+        
+        ctx.font = `${obj.size}px Arial`;
+        ctx.fillText(obj.emoji, obj.x, obj.y);
+      });
+      
+      // Draw explosions
+      explosions.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + Math.floor(p.life * 255).toString(16).padStart(2, '0');
+        ctx.fill();
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+        p.life -= 0.02;
+      });
+      explosions = explosions.filter(p => p.life > 0);
+      
+      // Draw confetti
+      confetti.forEach(p => {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+        ctx.restore();
+        
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.5; // gravity
+        p.rotation += p.rotSpeed;
+        p.life -= 0.005;
+      });
+      confetti = confetti.filter(p => p.life > 0);
+      
+      // Draw lasers
+      lasers.forEach(laser => {
+        laser.length = Math.min(laser.length + laser.speed, laser.maxLength);
+        
+        const gradient = ctx.createLinearGradient(
+          laser.x, laser.y,
+          laser.x + Math.cos(laser.angle) * laser.length,
+          laser.y + Math.sin(laser.angle) * laser.length
+        );
+        gradient.addColorStop(0, '#ff0000');
+        gradient.addColorStop(0.5, '#ff6600');
+        gradient.addColorStop(1, '#ffff00');
+        
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur = 20;
+        
+        ctx.beginPath();
+        ctx.moveTo(laser.x, laser.y);
+        ctx.lineTo(
+          laser.x + Math.cos(laser.angle) * laser.length,
+          laser.y + Math.sin(laser.angle) * laser.length
+        );
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        
+        laser.life -= 0.02;
+      });
+      lasers = lasers.filter(l => l.life > 0);
+      
+      // Update finger display
+      if (fingerCount !== lastFingerCount) {
+        $('fingerCount').textContent = fingerCount;
+        lastFingerCount = fingerCount;
+      }
+      
+      // Disco strobe effect
+      if (discoMode && Math.random() > 0.9) {
+        flashScreen(`hsl(${Math.random() * 360}, 100%, 50%)`);
+      }
+      
+      requestAnimationFrame(render);
+    }
+    
+    // ========================================
+    // MEDIAPIPE
+    // ========================================
+    
+    function initMediaPipe() {
+      hands = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      });
+      
+      hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.5
+      });
+      
+      hands.onResults(onResults);
+    }
+    
+    function onResults(results) {
+      // Draw camera (mirrored, semi-transparent)
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      ctx.scale(-1, 1);
+      ctx.translate(-canvas.width, 0);
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
+      
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const lm = results.multiHandLandmarks[0];
+        
+        // Get hand position (mirrored)
+        handX = 1 - lm[9].x;
+        handY = lm[9].y;
+        const screenX = handX * canvas.width;
+        const screenY = handY * canvas.height;
+        
+        // Draw hand with glow
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.translate(-canvas.width, 0);
+        
+        // Connections
+        const connections = [
+          [0,1],[1,2],[2,3],[3,4],
+          [0,5],[5,6],[6,7],[7,8],
+          [5,9],[9,10],[10,11],[11,12],
+          [9,13],[13,14],[14,15],[15,16],
+          [13,17],[17,18],[18,19],[19,20],[0,17]
+        ];
+        
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 20;
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 4;
+        
+        connections.forEach(([i, j]) => {
+          ctx.beginPath();
+          ctx.moveTo(lm[i].x * canvas.width, lm[i].y * canvas.height);
+          ctx.lineTo(lm[j].x * canvas.width, lm[j].y * canvas.height);
+          ctx.stroke();
+        });
+        
+        // Landmarks
+        lm.forEach((l, i) => {
+          ctx.beginPath();
+          ctx.arc(l.x * canvas.width, l.y * canvas.height, i === 8 ? 15 : 8, 0, Math.PI * 2);
+          ctx.fillStyle = i === 8 ? '#ff00ff' : '#00ffff';
+          ctx.fill();
+        });
+        
+        ctx.restore();
+        
+        // Detect power
+        currentPower = detectPower(lm);
+        
+        // Detect direction
+        handDirection = detectDirection(lm);
+        ['dirUp', 'dirDown', 'dirLeft', 'dirRight'].forEach(id => $(id).classList.remove('show'));
+        if (handDirection !== 'CENTER') {
+          $('dir' + handDirection.charAt(0) + handDirection.slice(1).toLowerCase()).classList.add('show');
+        }
+        
+        // Activate power
+        if (currentPower) {
+          activatePower(currentPower, screenX, screenY);
+        }
+        
+        // Check balloon pops with laser/pointing
+        if (currentPower === 'LASER') {
+          checkBalloonPop(screenX, screenY);
+        }
+        
+        // Update robot eyes
+        updateRobotEyes(handX, handY);
+        
+      } else {
+        currentPower = null;
+        ['dirUp', 'dirDown', 'dirLeft', 'dirRight'].forEach(id => $(id).classList.remove('show'));
+      }
+    }
+    
+    // ========================================
+    // START
+    // ========================================
+    
+    async function start() {
+      $('startScreen').classList.add('hidden');
+      
+      if (!hands) initMediaPipe();
+      
+      camera = new Camera(video, {
+        onFrame: async () => {
+          await hands.send({ image: video });
+        },
+        width: 1280,
+        height: 720
+      });
+      
+      await camera.start();
+      render();
+      
+      // Welcome message
+      setTimeout(() => {
+        setRobotMood('happy');
+        showCombo('LET\'S GO! 🚀');
+      }, 1000);
+    }
+    
+    $('btnStart').addEventListener('click', start);
+    
+    console.log('🦸 SUPER HAND POWERS ready! 🦸');
+  </script>
+</body>
+</html>
