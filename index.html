@@ -270,6 +270,13 @@
             <button id="use_par">Use current</button>
           </div>
 
+          <div class="sectionTitle">✌️ Peace custom voice</div>
+          <div class="small">When set, TTS says this instead of "PEACE" on peace gesture. Leave empty for default.</div>
+          <div class="sliderRow">
+            <input id="peaceMsg" type="text" maxlength="80" placeholder="e.g. salam, hello, victory…" style="background:#222228;color:#eee;border:1px solid #34343b;border-radius:10px;padding:8px 10px;font-size:14px;" />
+            <button id="peaceMsgClear">Clear</button>
+          </div>
+
           <div class="sectionTitle">🎛 Calibration mode</div>
           <div class="small">Hold steady ~2 seconds. Calibration creates a template for your hand/camera. (Saved automatically.)</div>
 
@@ -337,13 +344,15 @@
     // localStorage persistence
     // =======================
     const STORAGE_KEY = "magicHands_v1";
+    let peaceMsg = "";
 
     function saveState() {
       const obj = {
         thumbsThr,
         templates: serializeTemplates(),
         mirror,
-        magicOn
+        magicOn,
+        peaceMsg
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
     }
@@ -357,6 +366,7 @@
         if (obj.templates) deserializeTemplates(obj.templates);
         if (typeof obj.mirror === "boolean") mirror = obj.mirror;
         if (typeof obj.magicOn === "boolean") magicOn = obj.magicOn;
+        if (typeof obj.peaceMsg === "string") peaceMsg = obj.peaceMsg;
       } catch {}
     }
 
@@ -1198,7 +1208,8 @@ Saved automatically.`;
         if (ttsEnabled && major !== "—" && major !== lastSpoken && (tNow - lastSpeakTime > 900)) {
           lastSpoken = major;
           lastSpeakTime = tNow;
-          speak(prettyGesture(major).replace(/[^\w\s]/g, "").trim());
+          const customPeace = (major === "PEACE" && peaceMsg.trim()) ? peaceMsg.trim() : null;
+          speak(customPeace || prettyGesture(major).replace(/[^\w\s]/g, "").trim());
         }
 
         // MAGIC
@@ -1332,6 +1343,10 @@ particles=${particles.length} bursts=${bursts.length} likes=${likes.length}
     document.querySelectorAll(".calibBtn").forEach(btn => {
       btn.onclick = () => startCalibration(btn.dataset.gesture);
     });
+
+    $("peaceMsg").value = peaceMsg;
+    $("peaceMsg").oninput = (e) => { peaceMsg = e.target.value; saveState(); };
+    $("peaceMsgClear").onclick = () => { peaceMsg = ""; $("peaceMsg").value = ""; saveState(); log("Peace custom voice cleared."); };
 
     $("btnClearCalib").onclick = clearCalibration;
     $("btnResetAll").onclick = resetAllSaved;
